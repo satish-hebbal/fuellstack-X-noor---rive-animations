@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+// Imported by per-icon subpath rather than from 'reicon-react' directly: the
+// package's root barrel re-exports 2,674 modules, and while the bundler would
+// tree-shake them, the dev server still has to crawl every one.
+import Restart from 'reicon-react/icons/Restart'
+import X from 'reicon-react/icons/X'
 import { RiveStage, type StageInfo } from './RiveStage'
 import { useFpsReadout } from '../lib/useFpsReadout'
 import { useRiveBytes } from '../lib/useRiveBytes'
@@ -78,15 +83,23 @@ export function Lightbox({ animation, showFps, onClose }: Props) {
 
           <div className="lightbox__actions">
             <button
-              className="btn"
+              className="btn btn--icon"
               type="button"
               onClick={() => setReplayToken((token) => token + 1)}
+              title="Replay"
+              aria-label="Replay this animation"
             >
-              Replay
+              <Restart size={18} aria-hidden="true" />
             </button>
-            <button className="btn" type="button" ref={closeRef} onClick={onClose}>
-              Close
-              <kbd>Esc</kbd>
+            <button
+              className="btn btn--icon"
+              type="button"
+              ref={closeRef}
+              onClick={onClose}
+              title="Close (Esc)"
+              aria-label="Close"
+            >
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
         </header>

@@ -13,7 +13,8 @@
   "dependencies": {
     "@rive-app/react-webgl2": "^4.31.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "reicon-react": "^1.2.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.0",

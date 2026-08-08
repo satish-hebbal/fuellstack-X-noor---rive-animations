@@ -6,6 +6,19 @@
     <meta name="color-scheme" content="light dark" />
     <title>Rive Showcase</title>
     <meta name="description" content="A gallery of Rive animations." />
+
+    <!-- Fredoka, from Google Fonts. The two preconnects matter: they open the
+         DNS + TLS connections to both Google hosts in parallel with parsing,
+         instead of the stylesheet request having to wait for them. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Both axes are requested as full ranges (wdth 75-125, wght 300-700) so
+         the width stays adjustable from CSS — see --font-width in styles.css.
+         Axis names must be listed alphabetically, hence wdth before wght. -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wdth,wght@75..125,300..700&display=swap"
+      rel="stylesheet"
+    />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Cpath d='M10 9h7a5.5 5.5 0 0 1 1.6 10.8L22 24h-4.4l-2.9-4.3H13V24h-3V9Zm3 3v5h4a2.5 2.5 0 0 0 0-5h-4Z' fill='%23fff'/%3E%3C/svg%3E"

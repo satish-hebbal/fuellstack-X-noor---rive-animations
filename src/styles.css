@@ -1,6 +1,18 @@
 /* ---------------------------------------------------------------- tokens -- */
 
+/* Fredoka is loaded from Google Fonts — see the <link> tags in index.html.
+   To change the font, swap that link and the family name in --font-sans. */
+
 :root {
+  /* Everything after 'Fredoka' is what shows during the brief moment before
+     the font file lands. */
+  --font-sans: 'Fredoka', ui-rounded, ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  /* Fredoka's width axis. 100% Normal · 112.5% SemiExpanded · 125% Expanded —
+     any value in 75–125 works, it's a continuous axis, not five presets. */
+  --font-width: 112.5%;
+
   --bg: #ffffff;
   --surface: #f4f5f7;
   --surface-2: #ffffff;
@@ -50,8 +62,10 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font: 15px/1.5 var(--font-sans);
+  /* Must follow the `font:` shorthand — the shorthand resets font-stretch to
+     normal, so declaring this first would silently do nothing. */
+  font-stretch: var(--font-width);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -64,7 +78,7 @@ p {
 
 code,
 kbd {
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
@@ -104,6 +118,20 @@ kbd {
 
 .btn--ghost {
   background: transparent;
+}
+
+/* Square icon-only button. The label lives in aria-label + title, so it stays
+   readable to screen readers and on hover. */
+.btn--icon {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.btn--icon:hover {
+  color: var(--text);
 }
 
 .btn[aria-pressed='true'] {
@@ -170,7 +198,7 @@ kbd {
   border: 1px solid var(--border);
   border-radius: 9px;
   color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -282,7 +310,7 @@ kbd {
   border-radius: 6px;
   background: var(--bg);
   color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   /* Reserve the width of "000 fps" so ticking digits never nudge the title. */
@@ -433,7 +461,7 @@ kbd {
 .lightbox__file {
   margin-top: 2px;
   color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
 }
 
