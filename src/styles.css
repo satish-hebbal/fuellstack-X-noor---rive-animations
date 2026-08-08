@@ -1,0 +1,469 @@
+/* ---------------------------------------------------------------- tokens -- */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f4f5f7;
+  --surface-2: #ffffff;
+  --border: #e3e5ea;
+  --text: #15171c;
+  --muted: #6c7280;
+  --ring: #2f6bff;
+  --shadow: 0 1px 2px rgb(15 17 22 / 6%), 0 8px 24px rgb(15 17 22 / 6%);
+  --radius: 14px;
+  /* Shared by the column gap and the tile's bottom margin, so the masonry
+     spacing stays square in both directions. */
+  --gap: clamp(14px, 2vw, 22px);
+  /* Minimum column width; the browser fits as many as will go and stretches
+     them to fill. Raise it for fewer, larger tiles. */
+  --column: 260px;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0c0e12;
+  --surface: #14171d;
+  --surface-2: #171b22;
+  --border: #262b34;
+  --text: #eef1f6;
+  --muted: #99a1b0;
+  --ring: #6d9bff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 32px rgb(0 0 0 / 32%);
+
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ base -- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+code,
+kbd {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- buttons -- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--surface);
+  border-color: var(--muted);
+}
+
+.btn--ghost {
+  background: transparent;
+}
+
+.btn[aria-pressed='true'] {
+  border-color: var(--ring);
+  color: var(--ring);
+}
+
+.btn kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- topbar -- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(16px, 4vw, 40px);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.topbar h1 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.topbar__count {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.topbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fps {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fps[data-low] {
+  border-color: #e0603c;
+  color: #e0603c;
+}
+
+/* ------------------------------------------------------------------ page -- */
+
+.page {
+  padding: clamp(20px, 4vw, 40px);
+}
+
+/* Masonry via CSS multi-column: tiles keep their natural height and stack into
+   whichever column is shortest, so there are no ragged gaps. Note this fills
+   column-by-column — items read top-to-bottom down column one, then column two,
+   not left-to-right across the row. */
+.grid {
+  columns: var(--column);
+  column-gap: var(--gap);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.notice {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 480px;
+  margin: 12vh auto;
+  color: var(--muted);
+  text-align: center;
+}
+
+.notice h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notice code {
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.notice--error h2 {
+  color: #e0603c;
+}
+
+/* ------------------------------------------------------------------ card -- */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* A tile must never be split across two columns. */
+  break-inside: avoid;
+  margin-bottom: var(--gap);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card:hover,
+.card:has(.card__hit:focus-visible) {
+  border-color: color-mix(in srgb, var(--ring) 45%, var(--border));
+  box-shadow: var(--shadow);
+}
+
+/* The tile's height comes from its animation's own artboard shape, set inline
+   by GalleryCard — that variety is what makes the masonry read as masonry.
+   The 4/3 here is only the fallback before a ratio is known. */
+.card__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.card__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 13px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.card__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__fps {
+  flex: none;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  /* Reserve the width of "000 fps" so ticking digits never nudge the title. */
+  min-width: 7ch;
+  text-align: center;
+}
+
+.card__fps[data-low] {
+  border-color: #e0603c;
+  color: #e0603c;
+}
+
+.card__expand {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.card:hover .card__expand,
+.card:has(.card__hit:focus-visible) .card__expand {
+  opacity: 1;
+}
+
+/* Transparent overlay covering the whole tile. */
+.card__hit {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  cursor: zoom-in;
+}
+
+/* The card already draws the focus ring via :has(). */
+.card__hit:focus-visible {
+  outline: none;
+}
+
+/* ----------------------------------------------------------------- stage -- */
+
+/* Fills whichever positioned box holds it (a tile or the lightbox), so the
+   canvas always has a definite size to measure against. */
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* RiveComponent puts our className on its container div; the canvas inside is
+   sized programmatically by the runtime. */
+.stage__surface {
+  width: 100%;
+  height: 100%;
+}
+
+.stage__surface canvas {
+  display: block;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.stage.is-ready .stage__surface canvas {
+  opacity: 1;
+}
+
+/* Tiles must not swallow the click that opens the lightbox. */
+.card .stage__surface canvas {
+  pointer-events: none;
+}
+
+/* `__skeleton` sits inside a stage while Rive boots; `--skeleton` *is* the
+   stage while the file is still downloading. Same shimmer either way. */
+.stage__skeleton,
+.stage--skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--text) 6%, transparent) 45%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
+.stage--failed {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* -------------------------------------------------------------- lightbox -- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 3vw, 32px);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(14px);
+  animation: fade 0.16s ease;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.lightbox__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 100%;
+}
+
+.lightbox__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.lightbox__title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.lightbox__file {
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.lightbox__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.lightbox__stage {
+  position: relative;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  .lightbox__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
