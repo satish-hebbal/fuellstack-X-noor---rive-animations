@@ -3,9 +3,16 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/noor",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/noor/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

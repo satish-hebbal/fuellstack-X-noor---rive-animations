@@ -1,4 +1,4 @@
-# Rive Showcase
+# NOOR — Mascot Animations
 
 A Pinterest-style masonry gallery for your `.riv` animations. Drop files in a
 folder, they appear as tiles sized to their own artboards, click one to see it
@@ -6,7 +6,7 @@ big. That's the whole app.
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5173/noor/
 npm run drive:check  # verify the Google Drive setup
 ```
 
@@ -19,9 +19,11 @@ Two sources, picked automatically:
 | **Google Drive** | `VITE_DRIVE_FOLDER_ID` + `VITE_DRIVE_API_KEY` are set | Drop it in the folder, hit **Refresh** |
 | **Local folder** | Neither is set | Put it in `src/rive/`, restart the dev server |
 
-Either way the filename becomes the title (`loading-spinner.riv` → "Loading
-Spinner") and tiles sort alphabetically with natural number ordering (`scene-2`
-before `scene-10`).
+**Every animation inside a file gets its own tile.** A `.riv` holding eleven
+timelines fills eleven slots, each named after its timeline ("Excited", "Gently
+Happy"). A file with a single animation keeps the filename as its title instead
+(`loading-spinner.riv` → "Loading Spinner"), since a lone "Untitled 1" would
+tell you nothing.
 
 The local folder is the fallback, so `npm run dev` works with no credentials.
 
@@ -92,12 +94,19 @@ DRIVE_CHECK_REFERER=https://your-project.vercel.app/ npm run drive:check
 ## Deploying
 
 ```bash
-npm run build    # → dist/
-npm run preview  # serve dist/ locally to check it
+npm run build    # → dist/noor/
+npm run preview  # serve it locally to check
 ```
 
-`dist/` is plain static files and the build uses a relative base path, so it
-runs on any host unchanged.
+**The gallery lives at `/noor`, not the domain root.** `base` in
+[vite.config.ts](vite.config.ts) and `build.outDir` are set together so the
+build emits into `dist/noor/` — a host that serves `dist/` from the root then
+lands the site on `/noor` with no rewrite rules. The dev server uses the same
+path, so local and production addresses match:
+`http://localhost:5173/noor/`.
+
+To move it, change both values together (`base: '/'` + `outDir: 'dist'` puts it
+back at the root), and update the redirect in [vercel.json](vercel.json).
 
 **Because the animations come from Drive, deploying is close to a one-time
 job.** Adding or removing a `.riv` never needs a redeploy — only code changes do.

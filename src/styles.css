@@ -185,9 +185,20 @@ kbd {
 }
 
 .topbar h1 {
+  overflow: hidden;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* On a phone the title and three buttons can't share a row. The file/animation
+   count is the first thing worth losing. */
+@media (max-width: 560px) {
+  .topbar__count {
+    display: none;
+  }
 }
 
 .topbar__count {

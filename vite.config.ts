@@ -13,9 +13,10 @@ export default defineConfig({
     strictPort: true,
   },
 
-  // Relative base so the built site works from any path: a domain root,
-  // a GitHub Pages subfolder, or a Netlify/Vercel drop-in. No config needed.
-  base: './',
+  // The gallery lives at /noor rather than the domain root, leaving room for
+  // other mascots alongside it later. Set here rather than only in the deploy
+  // config so the dev server serves the same path as production.
+  base: '/noor/',
 
   // Teach Vite that .riv is a static asset. Files in src/rive/ are then emitted
   // with a content hash, so browsers cache them forever and re-download only
@@ -23,6 +24,10 @@ export default defineConfig({
   assetsInclude: ['**/*.riv'],
 
   build: {
+    // Emit into dist/noor so the host can serve dist/ from the root and the
+    // site lands on /noor — no rewrite rules needed anywhere.
+    outDir: 'dist/noor',
+
     // Never base64-inline .riv or .wasm into the JS bundle. Keeping them as
     // separate requests means they stream in parallel and stay cacheable.
     assetsInlineLimit: 0,

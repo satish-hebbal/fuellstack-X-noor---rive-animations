@@ -31,7 +31,7 @@ export default function App() {
     <>
       <header className="topbar">
         <div className="topbar__brand">
-          <h1>Rive Showcase</h1>
+          <h1>NOOR — Mascot Animations</h1>
           {gallery.status === 'ready' && (
             <span className="topbar__count">
               {gallery.tiles.length}{' '}
