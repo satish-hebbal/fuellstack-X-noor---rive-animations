@@ -1,4 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
+// Per-icon subpaths, not the package barrel — see the note in Lightbox.tsx.
+import Refresh from 'reicon-react/icons/Refresh'
+import Gauge from 'reicon-react/icons/Gauge'
+import Sun from 'reicon-react/icons/Sun'
+import Moon from 'reicon-react/icons/Moon'
+import Play from 'reicon-react/icons/Play'
+import Files from 'reicon-react/icons/Files'
 import { GalleryCard } from './components/GalleryCard'
 import { Lightbox } from './components/Lightbox'
 import { FpsMeter } from './components/FpsMeter'
@@ -8,9 +15,11 @@ import type { RiveTile } from './lib/animations'
 type Theme = 'light' | 'dark'
 
 function initialTheme(): Theme {
+  // A saved choice always wins. Otherwise light, regardless of the OS setting:
+  // the animations sit on a white plate, so light chrome is the closer match.
   const saved = localStorage.getItem('rive-showcase:theme')
   if (saved === 'light' || saved === 'dark') return saved
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'light'
 }
 
 export default function App() {
@@ -34,11 +43,19 @@ export default function App() {
           <h1>NOOR — Mascot Animations</h1>
           {gallery.status === 'ready' && (
             <span className="topbar__count">
-              {gallery.tiles.length}{' '}
-              {gallery.tiles.length === 1 ? 'animation' : 'animations'}
-              {/* Worth saying when ten tiles came out of two files. */}
-              {gallery.fileCount !== gallery.tiles.length &&
-                ` · ${gallery.fileCount} ${gallery.fileCount === 1 ? 'file' : 'files'}`}
+              <span className="topbar__stat">
+                <Play size={13} aria-hidden="true" />
+                {gallery.tiles.length}{' '}
+                {gallery.tiles.length === 1 ? 'animation' : 'animations'}
+              </span>
+              {/* Only worth saying when the counts differ — ten tiles out of
+                  two files is interesting, one out of one is noise. */}
+              {gallery.fileCount !== gallery.tiles.length && (
+                <span className="topbar__stat">
+                  <Files size={13} aria-hidden="true" />
+                  {gallery.fileCount} {gallery.fileCount === 1 ? 'file' : 'files'}
+                </span>
+              )}
             </span>
           )}
           {gallery.status === 'loading' && <span className="topbar__count">Loading…</span>}
@@ -49,31 +66,40 @@ export default function App() {
 
           {animationSource === 'drive' && (
             <button
-              className="btn btn--ghost"
+              className="btn btn--ghost btn--icon"
               type="button"
               onClick={gallery.reload}
               disabled={gallery.status === 'loading'}
               title="Re-read the Drive folder"
+              aria-label="Refresh from Google Drive"
             >
-              Refresh
+              <Refresh size={17} aria-hidden="true" />
             </button>
           )}
 
           <button
-            className="btn btn--ghost"
+            className="btn btn--ghost btn--icon"
             type="button"
             onClick={() => setShowFps((on) => !on)}
             aria-pressed={showFps}
+            title="Show frame rate"
+            aria-label="Show frame rate"
           >
-            FPS
+            <Gauge size={17} aria-hidden="true" />
           </button>
           <button
-            className="btn btn--ghost"
+            className="btn btn--ghost btn--icon"
             type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} background`}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} background`}
           >
-            {theme === 'dark' ? 'Light' : 'Dark'}
+            {/* Shows where the click takes you, not where you are. */}
+            {theme === 'dark' ? (
+              <Sun size={17} aria-hidden="true" />
+            ) : (
+              <Moon size={17} aria-hidden="true" />
+            )}
           </button>
         </div>
       </header>

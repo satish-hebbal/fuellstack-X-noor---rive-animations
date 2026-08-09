@@ -202,9 +202,19 @@ kbd {
 }
 
 .topbar__count {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   color: var(--muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.topbar__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .topbar__tools {
