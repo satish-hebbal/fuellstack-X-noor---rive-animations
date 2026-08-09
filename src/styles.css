@@ -22,6 +22,15 @@
   --ring: #2f6bff;
   --shadow: 0 1px 2px rgb(15 17 22 / 6%), 0 8px 24px rgb(15 17 22 / 6%);
   --radius: 14px;
+  /* The plate an animation is drawn on. Artboards exported with a transparent
+     background would otherwise show whatever is behind them, which changes
+     with the theme — this keeps every animation on the same ground. Set it to
+     any colour you like; it is deliberately not themed. */
+  --stage: #ffffff;
+  /* Skeleton and error text sit on --stage, so they stay dark-on-light
+     regardless of the surrounding theme. */
+  --stage-ink: #6c7280;
+  --stage-tint: rgb(15 17 22 / 7%);
   /* Shared by the column gap and the tile's bottom margin, so the masonry
      spacing stays square in both directions. */
   --gap: clamp(14px, 2vw, 22px);
@@ -281,6 +290,7 @@ kbd {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
+  background: var(--stage);
 }
 
 .card__bar {
@@ -390,12 +400,7 @@ kbd {
 .stage--skeleton {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 20%,
-    color-mix(in srgb, var(--text) 6%, transparent) 45%,
-    transparent 70%
-  );
+  background: linear-gradient(100deg, transparent 20%, var(--stage-tint) 45%, transparent 70%);
   background-size: 220% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -413,7 +418,7 @@ kbd {
   display: grid;
   place-items: center;
   padding: 16px;
-  color: var(--muted);
+  color: var(--stage-ink);
   font-size: 13px;
   text-align: center;
 }
@@ -475,7 +480,9 @@ kbd {
   max-width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  /* Same plate as the tiles, so enlarging an animation doesn't change the
+     ground it's standing on. */
+  background: var(--stage);
   overflow: hidden;
 }
 
