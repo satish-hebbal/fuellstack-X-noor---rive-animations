@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 // Per-icon subpaths, not the package barrel — see the note in Lightbox.tsx.
 import Refresh from 'reicon-react/icons/Refresh'
 import Gauge from 'reicon-react/icons/Gauge'
@@ -6,6 +6,7 @@ import Sun from 'reicon-react/icons/Sun'
 import Moon from 'reicon-react/icons/Moon'
 import Play from 'reicon-react/icons/Play'
 import Files from 'reicon-react/icons/Files'
+import More from 'reicon-react/icons/More'
 import { GalleryCard } from './components/GalleryCard'
 import { Lightbox } from './components/Lightbox'
 import { FpsMeter } from './components/FpsMeter'
@@ -26,6 +27,8 @@ export default function App() {
   const [selected, setSelected] = useState<RiveTile | null>(null)
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [showFps, setShowFps] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const headerRef = useRef<HTMLElement>(null)
 
   const gallery = useAnimations()
 
@@ -34,13 +37,50 @@ export default function App() {
     localStorage.setItem('rive-showcase:theme', theme)
   }, [theme])
 
+  // Dismiss the narrow-screen menu on an outside tap or Escape. Actions inside
+  // it deliberately leave it open, so you can flip the theme and see the result
+  // without reopening.
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!headerRef.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
+
   const close = useCallback(() => setSelected(null), [])
 
   return (
     <>
-      <header className="topbar">
+      <header className="topbar" ref={headerRef}>
         <div className="topbar__brand">
           <h1>NOOR — Mascot Animations</h1>
+        </div>
+
+        {/* Narrow screens only: collapses everything below into a panel so the
+            name gets the full width instead of being truncated. */}
+        <button
+          className="btn btn--ghost btn--icon topbar__more"
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-expanded={menuOpen}
+          title="Menu"
+          aria-label="Menu"
+        >
+          <More size={17} aria-hidden="true" />
+        </button>
+
+        <div className={`topbar__tools${menuOpen ? ' is-open' : ''}`}>
           {gallery.status === 'ready' && (
             <span className="topbar__count">
               <span className="topbar__stat">
@@ -59,9 +99,8 @@ export default function App() {
             </span>
           )}
           {gallery.status === 'loading' && <span className="topbar__count">Loading…</span>}
-        </div>
 
-        <div className="topbar__tools">
+          <div className="topbar__actions">
           {showFps && <FpsMeter />}
 
           {animationSource === 'drive' && (
@@ -101,6 +140,7 @@ export default function App() {
               <Moon size={17} aria-hidden="true" />
             )}
           </button>
+          </div>
         </div>
       </header>
 
