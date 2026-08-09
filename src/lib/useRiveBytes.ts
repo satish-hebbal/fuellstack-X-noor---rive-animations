@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { cacheKeyOf, type RiveAnimation } from './animations'
 import { loadRiveBytes } from './fileCache'
 
 type BytesState = {
@@ -8,26 +7,26 @@ type BytesState = {
 }
 
 /**
- * Fetches one animation's bytes, cache-first.
+ * Fetches one file's bytes, cache-first.
  *
  * We hand Rive a buffer rather than a URL so the download goes through
  * `fileCache` — Drive's own headers forbid HTTP caching, and a gallery that
  * re-downloads everything on each visit isn't a gallery you show people twice.
  *
+ * Several tiles usually share one file (each playing a different timeline from
+ * it); they all resolve to the same cache entry, so it's fetched once.
+ *
  * `enabled` is the tile's viewport gate: nothing is requested until the tile is
  * close enough to matter.
  */
-export function useRiveBytes(animation: RiveAnimation, enabled: boolean): BytesState {
+export function useRiveBytes(url: string, cacheKey: string, enabled: boolean): BytesState {
   const [state, setState] = useState<BytesState>({})
-
-  const { url } = animation
-  const key = cacheKeyOf(animation)
 
   useEffect(() => {
     if (!enabled) return
     let cancelled = false
 
-    loadRiveBytes(url, key).then(
+    loadRiveBytes(url, cacheKey).then(
       (bytes) => {
         if (!cancelled) setState({ bytes })
       },
@@ -42,7 +41,7 @@ export function useRiveBytes(animation: RiveAnimation, enabled: boolean): BytesS
     return () => {
       cancelled = true
     }
-  }, [url, key, enabled])
+  }, [url, cacheKey, enabled])
 
   return state
 }

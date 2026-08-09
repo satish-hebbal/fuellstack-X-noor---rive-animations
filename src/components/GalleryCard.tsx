@@ -1,31 +1,23 @@
-import { useCallback, useRef, useState } from 'react'
-import { RiveStage, type StageInfo } from './RiveStage'
+import { useRef } from 'react'
+import { RiveStage } from './RiveStage'
 import { useInView } from '../lib/useInView'
 import { useFpsReadout } from '../lib/useFpsReadout'
 import { useRiveBytes } from '../lib/useRiveBytes'
-import { getAspectRatio, rememberAspectRatio } from '../lib/aspectCache'
-import { cacheKeyOf, type RiveAnimation } from '../lib/animations'
-import {
-  DEFAULT_TILE_ASPECT_RATIO,
-  PRELOAD_MARGIN,
-  TILE_ASPECT_CLAMP,
-} from '../config'
+import { PRELOAD_MARGIN } from '../config'
+import type { RiveTile } from '../lib/animations'
 
 type Props = {
-  animation: RiveAnimation
+  tile: RiveTile
   /** True while the lightbox is open — freezes every tile behind it. */
   frozen: boolean
   /** Show this animation's own frame rate next to its name. */
   showFps: boolean
-  onOpen: (animation: RiveAnimation) => void
+  onOpen: (tile: RiveTile) => void
 }
 
-const [MIN_RATIO, MAX_RATIO] = TILE_ASPECT_CLAMP
-
-export function GalleryCard({ animation, frozen, showFps, onOpen }: Props) {
+export function GalleryCard({ tile, frozen, showFps, onOpen }: Props) {
   const stageRef = useRef<HTMLDivElement>(null)
   const fps = useFpsReadout()
-  const key = cacheKeyOf(animation)
 
   // Two independent questions, two different margins:
   //   `near`     — close enough to be worth downloading and instantiating.
@@ -34,26 +26,17 @@ export function GalleryCard({ animation, frozen, showFps, onOpen }: Props) {
   const near = useInView(stageRef, { rootMargin: PRELOAD_MARGIN, once: true })
   const onScreen = useInView(stageRef)
 
-  const { bytes, error } = useRiveBytes(animation, near)
-
-  // The tile's shape drives the masonry packing. Seed it from the cache so a
-  // returning visitor gets the right height before anything loads.
-  const [ratio, setRatio] = useState(
-    () => getAspectRatio(key) ?? DEFAULT_TILE_ASPECT_RATIO,
-  )
-
-  const handleReady = useCallback(
-    ({ aspectRatio }: StageInfo) => {
-      const clamped = Math.min(Math.max(aspectRatio, MIN_RATIO), MAX_RATIO)
-      setRatio(clamped)
-      rememberAspectRatio(key, clamped)
-    },
-    [key],
-  )
+  const { bytes, error } = useRiveBytes(tile.url, tile.cacheKey, near)
 
   return (
     <article className="card">
-      <div className="card__stage" ref={stageRef} style={{ aspectRatio: ratio }}>
+      {/* The artboard's real shape, known before anything loads because the
+          file was measured when the gallery was built. */}
+      <div
+        className="card__stage"
+        ref={stageRef}
+        style={{ aspectRatio: tile.aspectRatio }}
+      >
         {error ? (
           <div className="stage stage--failed">
             <span>{error}</span>
@@ -61,8 +44,10 @@ export function GalleryCard({ animation, frozen, showFps, onOpen }: Props) {
         ) : bytes ? (
           <RiveStage
             buffer={bytes}
+            artboard={tile.artboard}
+            animation={tile.animation}
+            stateMachine={tile.stateMachine}
             active={onScreen && !frozen}
-            onReady={handleReady}
             onFps={showFps ? fps.onFps : undefined}
           />
         ) : (
@@ -71,8 +56,8 @@ export function GalleryCard({ animation, frozen, showFps, onOpen }: Props) {
       </div>
 
       <div className="card__bar">
-        <span className="card__title" title={animation.fileName}>
-          {animation.title}
+        <span className="card__title" title={tile.fileName}>
+          {tile.title}
         </span>
 
         {showFps && (
@@ -95,8 +80,8 @@ export function GalleryCard({ animation, frozen, showFps, onOpen }: Props) {
 
       {/* Overlay hit target: keeps the button free of nested block content
           while still giving the whole tile keyboard focus and a click area. */}
-      <button className="card__hit" type="button" onClick={() => onOpen(animation)}>
-        <span className="sr-only">Open {animation.title}</span>
+      <button className="card__hit" type="button" onClick={() => onOpen(tile)}>
+        <span className="sr-only">Open {tile.title}</span>
       </button>
     </article>
   )

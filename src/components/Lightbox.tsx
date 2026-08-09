@@ -1,32 +1,29 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 // Imported by per-icon subpath rather than from 'reicon-react' directly: the
 // package's root barrel re-exports 2,674 modules, and while the bundler would
 // tree-shake them, the dev server still has to crawl every one.
 import Restart from 'reicon-react/icons/Restart'
 import X from 'reicon-react/icons/X'
-import { RiveStage, type StageInfo } from './RiveStage'
+import { RiveStage } from './RiveStage'
 import { useFpsReadout } from '../lib/useFpsReadout'
 import { useRiveBytes } from '../lib/useRiveBytes'
-import type { RiveAnimation } from '../lib/animations'
+import type { RiveTile } from '../lib/animations'
 
 type Props = {
-  animation: RiveAnimation
+  tile: RiveTile
   /** Show this animation's own frame rate next to its filename. */
   showFps: boolean
   onClose: () => void
 }
 
-export function Lightbox({ animation, showFps, onClose }: Props) {
-  const [aspectRatio, setAspectRatio] = useState(16 / 10)
+export function Lightbox({ tile, showFps, onClose }: Props) {
   const [replayToken, setReplayToken] = useState(0)
   const closeRef = useRef<HTMLButtonElement>(null)
   const fps = useFpsReadout()
 
   // Normally an instant cache hit: the tile behind the overlay already
   // downloaded this file.
-  const { bytes, error } = useRiveBytes(animation, true)
-
-  const handleReady = useCallback((info: StageInfo) => setAspectRatio(info.aspectRatio), [])
+  const { bytes, error } = useRiveBytes(tile.url, tile.cacheKey, true)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -62,16 +59,16 @@ export function Lightbox({ animation, showFps, onClose }: Props) {
       className="lightbox"
       role="dialog"
       aria-modal="true"
-      aria-label={animation.title}
+      aria-label={tile.title}
       onClick={onClose}
     >
       {/* stopPropagation so clicks inside the panel don't dismiss it. */}
       <div className="lightbox__panel" onClick={(event) => event.stopPropagation()}>
         <header className="lightbox__header">
           <div className="lightbox__meta">
-            <h2 className="lightbox__title">{animation.title}</h2>
+            <h2 className="lightbox__title">{tile.title}</h2>
             <p className="lightbox__file">
-              {animation.fileName}
+              {tile.fileName}
               {showFps && (
                 <>
                   {' · '}
@@ -109,8 +106,8 @@ export function Lightbox({ animation, showFps, onClose }: Props) {
         <div
           className="lightbox__stage"
           style={{
-            aspectRatio,
-            width: `min(92vw, 1200px, ${(76 * aspectRatio).toFixed(3)}vh)`,
+            aspectRatio: tile.aspectRatio,
+            width: `min(92vw, 1200px, ${(76 * tile.aspectRatio).toFixed(3)}vh)`,
           }}
         >
           {error ? (
@@ -119,12 +116,14 @@ export function Lightbox({ animation, showFps, onClose }: Props) {
             </div>
           ) : bytes ? (
             <RiveStage
-              key={animation.id}
+              key={tile.id}
               buffer={bytes}
+              artboard={tile.artboard}
+              animation={tile.animation}
+              stateMachine={tile.stateMachine}
               active
               interactive
               replayToken={replayToken}
-              onReady={handleReady}
               onFps={showFps ? fps.onFps : undefined}
             />
           ) : (

@@ -3,6 +3,25 @@
  */
 
 /**
+ * Show every animation inside a .riv as its own tile.
+ *
+ * A file exported from Rive usually holds a whole set of timelines — "idle",
+ * "excited", "sleepy" — plus any state machines. With this on, each becomes a
+ * tile, so a ten-animation file fills ten slots in the gallery instead of
+ * hiding nine of them.
+ *
+ * Set to `false` for one tile per file, showing whichever animation the runtime
+ * picks first.
+ */
+export const EXPAND_FILES_INTO_TILES = true
+
+/**
+ * How many .riv files to read at once when working out what's inside them.
+ * Only matters on a cold first visit; afterwards the structure is cached.
+ */
+export const PROBE_CONCURRENCY = 4
+
+/**
  * Rive files exported from the editor almost always contain a state machine
  * plus the raw linear animations it drives. The runtime's default is to play
  * linear animation #0, which for those files can look wrong (a one-shot intro

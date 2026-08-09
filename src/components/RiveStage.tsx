@@ -1,15 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Alignment, EventType, Fit, Layout, useRive } from '@rive-app/react-webgl2'
-import {
-  AUTO_BIND_VIEW_MODELS,
-  MAX_DEVICE_PIXEL_RATIO,
-  PREFER_STATE_MACHINE,
-} from '../config'
-
-export type StageInfo = {
-  /** Artboard width / height, so the lightbox can size itself to the artwork. */
-  aspectRatio: number
-}
+import { AUTO_BIND_VIEW_MODELS, MAX_DEVICE_PIXEL_RATIO } from '../config'
 
 type Props = {
   /**
@@ -18,6 +9,11 @@ type Props = {
    * the files are served from Drive.
    */
   buffer: ArrayBuffer
+  /** Which artboard, and which one thing on it to play. Both come from the
+   *  file probe, so there's no guessing at this layer any more. */
+  artboard?: string
+  animation?: string
+  stateMachine?: string
   /**
    * Whether the render loop should run. `false` stops drawing entirely — the
    * animation keeps its state but costs zero CPU and zero GPU until it's `true`
@@ -31,7 +27,6 @@ type Props = {
   interactive?: boolean
   /** Bump this number to restart playback from the beginning. */
   replayToken?: number
-  onReady?: (info: StageInfo) => void
   /**
    * Called twice a second with this animation's own frame rate. Pass
    * `undefined` to skip the measurement entirely — nothing is subscribed and
@@ -44,10 +39,12 @@ type Props = {
 
 export function RiveStage({
   buffer,
+  artboard,
+  animation,
+  stateMachine,
   active,
   interactive = false,
   replayToken = 0,
-  onReady,
   onFps,
 }: Props) {
   const [ready, setReady] = useState(false)
@@ -63,20 +60,14 @@ export function RiveStage({
     [],
   )
 
-  // Held in a ref so the effect below doesn't re-run when the parent hands us a
-  // new callback identity. Layout effects commit before the effect that reads it.
-  const onReadyRef = useRef(onReady)
-  useLayoutEffect(() => {
-    onReadyRef.current = onReady
-  })
-
   const { rive, RiveComponent } = useRive(
     {
       buffer,
       layout,
-      // Start paused: we can only inspect the file's artboard once it's loaded,
-      // and we want to choose *what* to play before anything moves.
-      autoplay: false,
+      artboard: artboard || undefined,
+      animations: animation,
+      stateMachines: stateMachine,
+      autoplay: true,
       autoBind: AUTO_BIND_VIEW_MODELS,
       shouldDisableRiveListeners: !interactive,
       onLoadError: () => setFailed(true),
@@ -92,44 +83,22 @@ export function RiveStage({
     },
   )
 
-  /** The state machine we chose to drive, if the file has one. */
-  const target = useRef<string | undefined>(undefined)
-
-  // `rive` becomes non-null only once the file is loaded and its artboard is
-  // readable, so this is where we decide what to play.
   useEffect(() => {
-    if (!rive) return
-
-    const stateMachine = PREFER_STATE_MACHINE ? rive.stateMachineNames[0] : undefined
-    target.current = stateMachine
-
-    if (stateMachine) {
-      // Drop the linear animation the runtime instanced by default, otherwise
-      // it and the state machine would both write to the same artboard.
-      rive.stop()
-      rive.play(stateMachine)
-    } else {
-      rive.play()
-    }
-
-    setReady(true)
-
-    const { minX, minY, maxX, maxY } = rive.bounds
-    const width = maxX - minX
-    const height = maxY - minY
-    onReadyRef.current?.({ aspectRatio: height > 0 ? width / height : 1 })
+    if (rive) setReady(true)
   }, [rive])
 
   // Replay, for one-shot animations that would otherwise sit on their last frame.
   useEffect(() => {
     if (!rive || replayToken === 0) return
     rive.reset({
-      stateMachines: target.current,
+      artboard: artboard || undefined,
+      animations: animation,
+      stateMachines: stateMachine,
       autoplay: true,
       autoBind: AUTO_BIND_VIEW_MODELS,
     })
     rive.startRendering()
-  }, [rive, replayToken])
+  }, [rive, replayToken, artboard, animation, stateMachine])
 
   // Per-animation frame rate.
   //

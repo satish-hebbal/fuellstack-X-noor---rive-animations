@@ -3,7 +3,7 @@ import { GalleryCard } from './components/GalleryCard'
 import { Lightbox } from './components/Lightbox'
 import { FpsMeter } from './components/FpsMeter'
 import { animationSource, useAnimations } from './lib/useAnimations'
-import type { RiveAnimation } from './lib/animations'
+import type { RiveTile } from './lib/animations'
 
 type Theme = 'light' | 'dark'
 
@@ -14,7 +14,7 @@ function initialTheme(): Theme {
 }
 
 export default function App() {
-  const [selected, setSelected] = useState<RiveAnimation | null>(null)
+  const [selected, setSelected] = useState<RiveTile | null>(null)
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [showFps, setShowFps] = useState(false)
 
@@ -27,8 +27,6 @@ export default function App() {
 
   const close = useCallback(() => setSelected(null), [])
 
-  const count = gallery.status === 'ready' ? gallery.animations.length : 0
-
   return (
     <>
       <header className="topbar">
@@ -36,12 +34,14 @@ export default function App() {
           <h1>Rive Showcase</h1>
           {gallery.status === 'ready' && (
             <span className="topbar__count">
-              {count} {count === 1 ? 'animation' : 'animations'}
+              {gallery.tiles.length}{' '}
+              {gallery.tiles.length === 1 ? 'animation' : 'animations'}
+              {/* Worth saying when ten tiles came out of two files. */}
+              {gallery.fileCount !== gallery.tiles.length &&
+                ` · ${gallery.fileCount} ${gallery.fileCount === 1 ? 'file' : 'files'}`}
             </span>
           )}
-          {gallery.status === 'loading' && (
-            <span className="topbar__count">Loading…</span>
-          )}
+          {gallery.status === 'loading' && <span className="topbar__count">Loading…</span>}
         </div>
 
         <div className="topbar__tools">
@@ -79,9 +79,7 @@ export default function App() {
       </header>
 
       <main className="page">
-        {gallery.status === 'loading' && (
-          <p className="notice">Reading your animations…</p>
-        )}
+        {gallery.status === 'loading' && <p className="notice">Reading your animations…</p>}
 
         {gallery.status === 'error' && (
           <div className="notice notice--error">
@@ -94,29 +92,30 @@ export default function App() {
         )}
 
         {gallery.status === 'ready' &&
-          (gallery.animations.length === 0 ? (
+          (gallery.tiles.length === 0 ? (
             <div className="notice">
               <h2>No animations yet</h2>
               <p>
                 {animationSource === 'drive' ? (
                   <>
                     Drop <code>.riv</code> files into your Drive folder, then hit{' '}
-                    <strong>Refresh</strong>. The filename becomes the title.
+                    <strong>Refresh</strong>. Every animation inside a file gets its own
+                    tile.
                   </>
                 ) : (
                   <>
                     Drop your <code>.riv</code> files into <code>src/rive/</code> and they
-                    show up here automatically. The filename becomes the title.
+                    show up here automatically.
                   </>
                 )}
               </p>
             </div>
           ) : (
             <div className="grid">
-              {gallery.animations.map((animation) => (
+              {gallery.tiles.map((tile) => (
                 <GalleryCard
-                  key={animation.id}
-                  animation={animation}
+                  key={tile.id}
+                  tile={tile}
                   frozen={selected !== null}
                   showFps={showFps}
                   onOpen={setSelected}
@@ -126,7 +125,7 @@ export default function App() {
           ))}
       </main>
 
-      {selected && <Lightbox animation={selected} showFps={showFps} onClose={close} />}
+      {selected && <Lightbox tile={selected} showFps={showFps} onClose={close} />}
     </>
   )
 }
