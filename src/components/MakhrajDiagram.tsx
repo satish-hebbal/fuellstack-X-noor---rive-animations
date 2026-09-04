@@ -62,7 +62,7 @@ export function MakhrajDiagram({
   const audio = useRef(createAudioLibrary())
   useMemo(() => {
     for (const [path, url] of Object.entries(audioFiles)) {
-      audio.current.addUrl(path.split('/').pop() ?? path, url)
+      audio.current.add(path.split('/').pop() ?? path, url)
     }
   }, [])
 
@@ -76,31 +76,11 @@ export function MakhrajDiagram({
   )
 
   const { rive, RiveComponent } = useRive(
-    src
-      ? {
-          src,
-          layout,
-          autoplay: false,
-          autoBind: true,
-          // Observe the embedded assets on the way past so their bytes can be
-          // played directly. Returning false leaves Rive's own handling alone.
-          assetLoader: (asset, bytes) => {
-            if (asset.isAudio && bytes?.length) audio.current.add(asset.name, bytes)
-            return false
-          },
-        }
-      : null,
+    src ? { src, layout, autoplay: false, autoBind: true } : null,
     { useOffscreenRenderer: true, customDevicePixelRatio: devicePixelRatio },
   )
 
   // Read the file's timelines once and index them by their leading number.
-  // Handy when debugging audio or playback from the console.
-  useEffect(() => {
-    if (rive && import.meta.env.DEV) {
-      ;(window as unknown as Record<string, unknown>).__rive = rive
-    }
-  }, [rive])
-
   useEffect(() => {
     if (!rive) return
     const map: Record<number, string> = {}
@@ -117,9 +97,12 @@ export function MakhrajDiagram({
         .map(Number)
         .sort((a, b) => a - b),
     )
-    // Assets are gathered by assetLoader during load, so by now this is final.
+  }, [rive, onLetters])
+
+  // Sound files are known from the glob, so this doesn't wait on Rive at all.
+  useEffect(() => {
     onAudioLetters?.(audio.current.letters())
-  }, [rive, onLetters, onAudioLetters])
+  }, [onAudioLetters])
 
   const animation = byLetter[letterIndex]
 

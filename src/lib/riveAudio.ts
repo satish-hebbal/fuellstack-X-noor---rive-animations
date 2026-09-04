@@ -1,37 +1,29 @@
 /**
- * Plays a .riv's embedded audio ourselves.
+ * Plays the letter sounds.
  *
- * Rive only reports Events from state machines — `advanceAndReportChanges`
- * gathers them from `activeStateMachines` and nothing else. Linear animations
- * advance and apply but report nothing, so an Audio Event on a timeline never
- * fires at runtime, however well it previews in the editor.
+ * Audio deliberately lives outside the .riv, as ordinary files in
+ * `src/assets/audio` named `01-alif.mp3`, `02-ba.mp3`. Two reasons:
  *
- * The makhraj file is one timeline per letter with no state machine inputs, so
- * there's no way to reach those events without rebuilding it as 29 states and
- * transitions. Instead we pull the audio assets straight out of the file and
- * play them through WebAudio, matched to letters by the same leading number the
- * timelines use: `01-alif` → 1, `02- ba` → 2.
+ *  1. Rive only reports Events from state machines — `advanceAndReportChanges`
+ *     gathers them from `activeStateMachines` and nowhere else. This file plays
+ *     one linear timeline per letter, and linear animations report nothing, so
+ *     an Audio Event on a timeline never fires at runtime however well it
+ *     previews in the editor. Embedding audio would mean rebuilding the file as
+ *     29 states and transitions.
+ *  2. Rive only compiles assets something references, so a sound sitting in the
+ *     editor's Assets panel can silently miss the export — which is exactly what
+ *     happened to `01-alif`.
  *
- * This also sidesteps Rive's audio unlocking, since we own the context.
- *
- * Sounds can come from two places, and a loose file always wins:
- *
- *   1. `src/assets/audio/01-alif.mp3` — just drop it in, no Rive involved.
- *   2. Assets embedded in the .riv, if Rive compiled them.
- *
- * The first exists because Rive only exports assets something references, so a
- * sound sitting unused in the editor's Assets panel never reaches the file.
- * Keeping audio as ordinary files also means changing a recording doesn't need
- * a re-export.
+ * Keeping them as files also means the same pairing works for the React Native
+ * build: play timeline N, play sound N. The leading number is the whole
+ * contract.
  */
 const LEADING_NUMBER = /^\s*(\d+)/
 
 export type AudioLibrary = {
-  /** Raw asset bytes from inside the .riv, keyed by letter position. */
-  add: (name: string, bytes: Uint8Array) => void
-  /** A loose audio file, which takes precedence over anything embedded. */
-  addUrl: (name: string, url: string) => void
-  /** Which letters have a sound. */
+  /** Register a sound file under the letter its filename starts with. */
+  add: (fileName: string, url: string) => void
+  /** Which letters have a sound, ascending. */
   letters: () => number[]
   /** Play one, replacing whatever is already sounding. */
   play: (letterIndex: number) => Promise<void>
@@ -39,7 +31,6 @@ export type AudioLibrary = {
 }
 
 export function createAudioLibrary(): AudioLibrary {
-  const raw = new Map<number, Uint8Array>()
   const urls = new Map<number, string>()
   const decoded = new Map<number, AudioBuffer>()
   let context: AudioContext | null = null
@@ -51,20 +42,13 @@ export function createAudioLibrary(): AudioLibrary {
   }
 
   return {
-    add(name, bytes) {
-      const match = LEADING_NUMBER.exec(name)
-      if (!match) return
-      const index = Number(match[1])
-      if (!raw.has(index)) raw.set(index, bytes)
-    },
-
-    addUrl(name, url) {
-      const match = LEADING_NUMBER.exec(name)
+    add(fileName, url) {
+      const match = LEADING_NUMBER.exec(fileName)
       if (!match) return
       urls.set(Number(match[1]), url)
     },
 
-    letters: () => [...new Set([...urls.keys(), ...raw.keys()])].sort((a, b) => a - b),
+    letters: () => [...urls.keys()].sort((a, b) => a - b),
 
     stop() {
       try {
@@ -77,22 +61,16 @@ export function createAudioLibrary(): AudioLibrary {
 
     async play(letterIndex) {
       const url = urls.get(letterIndex)
-      const bytes = raw.get(letterIndex)
-      if (!url && !bytes) return
+      if (!url) return
 
       const ctx = getContext()
-      // Safe to call repeatedly; only succeeds inside a user gesture, which is
-      // where this is called from.
+      // Safe to call repeatedly, and only succeeds inside a user gesture —
+      // which is where this is called from.
       if (ctx.state === 'suspended') await ctx.resume()
 
       let buffer = decoded.get(letterIndex)
       if (!buffer) {
-        // decodeAudioData detaches whatever it's given, so hand it a copy and
-        // keep the original for any later re-decode.
-        const source = url
-          ? await (await fetch(url)).arrayBuffer()
-          : (bytes as Uint8Array).slice().buffer as ArrayBuffer
-        buffer = await ctx.decodeAudioData(source)
+        buffer = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer())
         decoded.set(letterIndex, buffer)
       }
 

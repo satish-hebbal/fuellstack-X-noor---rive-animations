@@ -1,30 +1,39 @@
 # Letter sounds
 
-Drop audio files here named with the letter's position in front, the same way
-the Rive timelines are named:
+One file per letter, named with the letter's position in front — the same
+number the Rive timelines use:
 
 ```
-01-alif.mp3
-02-ba.mp3
-07-khaa.mp3
+01-alif.mp3     ↔  timeline "1. alif"
+02-ba.mp3       ↔  timeline "2. baa"
+07-khaa.mp3     ↔  timeline "7. khaa"
 ```
 
-`.mp3`, `.wav`, `.m4a`, `.ogg` and `.aac` all work. The number is the whole
-mapping — `01-alif.mp3` plays for letter 1. Nothing else needs editing.
+`.mp3`, `.wav`, `.m4a`, `.ogg` and `.aac` all work. The leading number is the
+whole mapping; the rest of the filename is for humans. Add a file and it plays,
+with no code change.
 
-## Why sounds can live here rather than in the .riv
+## Why audio isn't inside the .riv
 
-Rive only compiles assets that something in an artboard actually references. A
-sound sitting in the editor's Assets panel but not wired to an Audio Event never
-makes it into the exported file — which is exactly what happened to `01-alif`.
+Two independent reasons, either one sufficient:
 
-A file in this folder always wins over a copy embedded in the .riv, so you can
-fix or replace a recording without re-exporting anything from Rive.
-
-## Why the app doesn't use Rive's Audio Events
-
-It can't. Rive only reports Events from **state machines** — `advanceAndReportChanges`
+**Rive only reports Events from state machines.** `advanceAndReportChanges`
 gathers them from `activeStateMachines` and nowhere else. This file plays one
-linear timeline per letter, and linear animations report no events at all, so an
-Audio Event on a timeline never fires at runtime however well it previews in the
-editor.
+linear timeline per letter, and linear animations report no events at all — so
+an Audio Event sitting on a timeline never fires at runtime, however well it
+previews in the editor. Embedding audio would mean rebuilding the file as 29
+states and transitions.
+
+**Rive only compiles assets something references.** A sound in the editor's
+Assets panel that isn't wired to an Event never reaches the exported file, with
+no warning. That's exactly what happened to `01-alif`.
+
+## Handing this to the mobile team
+
+Ship the `.riv` plus this folder. The contract is one sentence: *play timeline N
+and sound N together; the leading number is the mapping.* It's the same on
+React Native — `rive.play("7. khaa")` alongside the matching file in
+`expo-av` — and it means re-recording a letter never needs a Rive re-export.
+
+Keep the prefix strict on both sides. `7. khaa` and `07-khaa.mp3` are fine;
+`khaa 7` is not, because the number is parsed from the front.

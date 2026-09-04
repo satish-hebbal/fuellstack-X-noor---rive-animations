@@ -20,11 +20,18 @@ npm run drive:check  # verify the Google Drive setup
 Routing is a dozen lines in [src/App.tsx](src/App.tsx): one path segment picks
 one page. No react-router — there are no nested routes, params or loaders here.
 
-`/makhraj` expects its mouth diagram at **`src/assets/makhraj.riv`** and shows a
-placeholder until that file exists. The state machine and input names it drives
-are at the bottom of [src/config.ts](src/config.ts); copy them from the Rive
-editor's State Machine panel. The letter list is
-[src/lib/letters.ts](src/lib/letters.ts).
+`/makhraj` reads its mouth diagram from **`src/assets/makhraj.riv`** and its
+letter sounds from **`src/assets/audio/`**, matched by the number each name
+starts with: timeline `7. khaa` pairs with `07-khaa.mp3`. Adding a letter is
+exporting a timeline and dropping a sound file — no code change. The letter list
+is [src/lib/letters.ts](src/lib/letters.ts).
+
+Audio is deliberately *not* embedded in the .riv. Rive only reports Events from
+state machines, and this file plays one linear timeline per letter — linear
+animations report no events, so an Audio Event on a timeline never fires at
+runtime however well it previews in the editor. See
+[src/assets/audio/README.md](src/assets/audio/README.md) for the full reasoning
+and what to hand the mobile team.
 
 ## Where the files come from
 
