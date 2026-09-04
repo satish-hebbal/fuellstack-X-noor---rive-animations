@@ -77,17 +77,14 @@ export const PRELOAD_MARGIN = '800px'
 /* ------------------------------------------------------ makhraj lesson -- */
 
 /**
- * How the mouth-diagram .riv is driven.
+ * How the mouth-diagram .riv maps to letters.
  *
- * The file goes in `src/assets/makhraj.riv`. Until it exists the diagram shows
- * a placeholder, so the rest of the screen can be built and reviewed without
- * it. These three names must match what's in the file — open it in the Rive
- * editor and copy them from the State Machine panel.
+ * The file at `src/assets/makhraj.riv` holds one timeline per letter, named
+ * with the letter's position in front: `1. alif`, `2. baa`, `7. khaa`. That
+ * number is the whole mapping — nothing here needs editing when you add more
+ * letters, just export the file with the new timelines named the same way.
+ *
+ * The state machine in the file has no inputs, so playback drives the timelines
+ * directly rather than setting machine values.
  */
-export const MAKHRAJ_STATE_MACHINE = 'State Machine 1'
-
-/** Number input, set to the letter's 1-based position (1–29). */
-export const MAKHRAJ_LETTER_INPUT = 'letter'
-
-/** Trigger input fired by the play button. Leave undefined if there isn't one. */
-export const MAKHRAJ_PLAY_INPUT: string | undefined = 'play'
+export const MAKHRAJ_ANIMATION_INDEX = /^\s*(\d+)/

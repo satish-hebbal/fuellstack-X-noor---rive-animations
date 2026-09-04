@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import ArrowLeft from 'reicon-react/icons/ArrowLeft'
 import Fire from 'reicon-react/icons/Fire'
 import Play from 'reicon-react/icons/Play'
@@ -15,8 +15,13 @@ import '../styles-makhraj.css'
  * wired to change with the letter rather than being a fixed loop.
  */
 export default function MakhrajPage() {
-  const [index, setIndex] = useState(6) // خ — letter 7 of 29, as in the design
+  // Starts on Alif because that's a letter the .riv actually animates; the
+  // design's letter 7 has no timeline yet.
+  const [index, setIndex] = useState(0)
   const [playToken, setPlayToken] = useState(0)
+  const [animated, setAnimated] = useState(true)
+
+  const handleAvailability = useCallback((available: boolean) => setAnimated(available), [])
 
   const letter = letters[index]
 
@@ -46,7 +51,12 @@ export default function MakhrajPage() {
         </p>
 
         <div className="mk-stage">
-          <MakhrajDiagram letterIndex={letter.index} playToken={playToken} />
+          <MakhrajDiagram
+            letterIndex={letter.index}
+            playToken={playToken}
+            onAvailability={handleAvailability}
+          />
+          {!animated && <p className="mk-stage__todo">No timeline for this letter yet</p>}
           <span className="mk-chip" lang="ar">
             {letter.arabic}
           </span>
@@ -64,6 +74,7 @@ export default function MakhrajPage() {
           className="mk-play"
           type="button"
           onClick={() => setPlayToken((token) => token + 1)}
+          disabled={!animated}
           aria-label={`Play the ${letter.name} sound`}
         >
           <Play size={24} weight="Filled" aria-hidden="true" />
