@@ -13,10 +13,8 @@ export default defineConfig({
     strictPort: true,
   },
 
-  // The gallery lives at /noor rather than the domain root, leaving room for
-  // other mascots alongside it later. Set here rather than only in the deploy
-  // config so the dev server serves the same path as production.
-  base: '/noor/',
+  // Served from the domain root; the app routes /noor and /makhraj itself.
+  base: '/',
 
   // Teach Vite that .riv is a static asset. Files in src/rive/ are then emitted
   // with a content hash, so browsers cache them forever and re-download only
@@ -24,9 +22,7 @@ export default defineConfig({
   assetsInclude: ['**/*.riv'],
 
   build: {
-    // Emit into dist/noor so the host can serve dist/ from the root and the
-    // site lands on /noor — no rewrite rules needed anywhere.
-    outDir: 'dist/noor',
+    outDir: 'dist',
 
     // Never base64-inline .riv or .wasm into the JS bundle. Keeping them as
     // separate requests means they stream in parallel and stay cacheable.

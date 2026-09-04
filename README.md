@@ -6,9 +6,25 @@ big. That's the whole app.
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173/noor/
+npm run dev          # http://localhost:5173/noor
 npm run drive:check  # verify the Google Drive setup
 ```
+
+## Pages
+
+| Path | What it is |
+| --- | --- |
+| `/noor` | The animation gallery — everything below describes this |
+| `/makhraj` | Arabic letter-articulation lesson screen, driven by its own Rive file |
+
+Routing is a dozen lines in [src/App.tsx](src/App.tsx): one path segment picks
+one page. No react-router — there are no nested routes, params or loaders here.
+
+`/makhraj` expects its mouth diagram at **`src/assets/makhraj.riv`** and shows a
+placeholder until that file exists. The state machine and input names it drives
+are at the bottom of [src/config.ts](src/config.ts); copy them from the Rive
+editor's State Machine panel. The letter list is
+[src/lib/letters.ts](src/lib/letters.ts).
 
 ## Where the files come from
 
@@ -94,19 +110,15 @@ DRIVE_CHECK_REFERER=https://your-project.vercel.app/ npm run drive:check
 ## Deploying
 
 ```bash
-npm run build    # → dist/noor/
+npm run build    # → dist/
 npm run preview  # serve it locally to check
 ```
 
-**The gallery lives at `/noor`, not the domain root.** `base` in
-[vite.config.ts](vite.config.ts) and `build.outDir` are set together so the
-build emits into `dist/noor/` — a host that serves `dist/` from the root then
-lands the site on `/noor` with no rewrite rules. The dev server uses the same
-path, so local and production addresses match:
-`http://localhost:5173/noor/`.
-
-To move it, change both values together (`base: '/'` + `outDir: 'dist'` puts it
-back at the root), and update the redirect in [vercel.json](vercel.json).
+The build is served from the domain root and the app routes `/noor` and
+`/makhraj` itself, so the host needs a **single-page fallback** — any unmatched
+path must serve `index.html` rather than 404. [vercel.json](vercel.json) sets
+that, plus a redirect from `/` to `/noor`. On another host, that fallback is the
+one setting you have to reproduce.
 
 **Because the animations come from Drive, deploying is close to a one-time
 job.** Adding or removing a `.riv` never needs a redeploy — only code changes do.

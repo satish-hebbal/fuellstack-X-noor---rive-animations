@@ -1,0 +1,320 @@
+/* Makhraj lesson screen. Scoped under .mk so nothing here can reach the
+   gallery, which has its own visual language. */
+
+.mk {
+  --mk-bg: #f6f3ef;
+  --mk-card: #ffffff;
+  --mk-edge: #e3ded7;
+  --mk-ink: #241c17;
+  --mk-muted: #b3aba3;
+  --mk-rust: #c2571f;
+  --mk-green: #57b23a;
+  --mk-green-edge: #43902b;
+  --mk-cta: #b0511c;
+  --mk-cta-edge: #833b12;
+  --mk-gold-1: #ffd166;
+  --mk-gold-2: #f2a32c;
+  --mk-brown: #4c2a12;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 430px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 20px 18px 28px;
+  background: var(--mk-bg);
+  color: var(--mk-ink);
+}
+
+/* ------------------------------------------------------------- top row -- */
+
+.mk-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mk-back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 2px solid var(--mk-edge);
+  border-bottom-width: 4px;
+  border-radius: 50%;
+  background: var(--mk-card);
+  color: var(--mk-rust);
+  cursor: pointer;
+}
+
+.mk-streak {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--mk-gold-1), var(--mk-gold-2));
+  box-shadow: 0 2px 0 rgb(0 0 0 / 12%);
+  color: var(--mk-brown);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* The XP bar fills whatever the pills leave, with room at the right for the
+   badge that sits over its end. */
+.mk-xp {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  /* Room for the badge, which sits over the track's right end. */
+  padding-right: 28px;
+}
+
+.mk-xp__track {
+  position: relative;
+  height: 40px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--mk-brown);
+}
+
+.mk-xp__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--mk-gold-1), var(--mk-gold-2));
+  transition: width 0.35s ease;
+}
+
+/* Inside the track, clear of the badge overlapping its right end. */
+.mk-xp__value {
+  position: absolute;
+  top: 50%;
+  right: 62px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transform: translateY(-50%);
+}
+
+.mk-xp__badge {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #e0a878, #c98550);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 12%);
+  color: #6d3b16;
+  font-size: 15px;
+  font-weight: 700;
+  transform: translateY(-50%);
+}
+
+/* ---------------------------------------------------------------- card -- */
+
+.mk-card {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 16px 16px 22px;
+  border: 2px solid var(--mk-edge);
+  border-bottom-width: 5px;
+  border-radius: 26px;
+  background: var(--mk-card);
+}
+
+.mk-card__step {
+  color: var(--mk-rust);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.mk-stage {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  margin-top: 8px;
+}
+
+.mk-stage__surface {
+  width: 100%;
+  height: 100%;
+}
+
+/* Absolute rather than height:100% — the stage is a flex item, so a percentage
+   height has nothing definite to resolve against. */
+.mk-stage__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  justify-items: center;
+  border: 2px dashed var(--mk-edge);
+  border-radius: 18px;
+  color: var(--mk-muted);
+  text-align: center;
+}
+
+.mk-stage__placeholder code {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--mk-bg);
+  font-size: 12px;
+}
+
+/* Sits over the lower-right of the diagram, as in the design. */
+.mk-chip {
+  position: absolute;
+  right: 4px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--mk-card);
+  box-shadow: 0 4px 14px rgb(36 28 23 / 14%);
+  font-size: 32px;
+  line-height: 1;
+}
+
+.mk-card__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mk-card__name {
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.mk-card__back {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mk-muted);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* The card's bottom edge bulges down around the play button. Built as a
+   separate rounded box rather than a clip-path so it keeps the same border and
+   heavier bottom edge as the card; the ::before hides the seam where the two
+   meet. */
+.mk-card__notch {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  width: 108px;
+  height: 32px;
+  border: 2px solid var(--mk-edge);
+  border-top: 0;
+  border-bottom-width: 5px;
+  border-radius: 0 0 54px 54px;
+  background: var(--mk-card);
+  transform: translateX(-50%);
+}
+
+.mk-card__notch::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  right: 2px;
+  left: 2px;
+  height: 8px;
+  background: var(--mk-card);
+}
+
+.mk-play {
+  position: absolute;
+  bottom: -26px;
+  left: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mk-green);
+  box-shadow: 0 4px 0 var(--mk-green-edge);
+  color: #fff;
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.mk-play:active {
+  box-shadow: 0 1px 0 var(--mk-green-edge);
+  transform: translate(-50%, 3px);
+}
+
+/* ----------------------------------------------------------------- cta -- */
+
+.mk-cta {
+  margin-top: 26px;
+  padding: 17px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--mk-cta);
+  box-shadow: 0 5px 0 var(--mk-cta-edge);
+  color: #fff;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.mk-cta:active {
+  box-shadow: 0 1px 0 var(--mk-cta-edge);
+  transform: translateY(4px);
+}
+
+/* Stepping through letters while there's no real navigation yet. */
+.mk-steps {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  /* Clears the notch and play button hanging below the card. */
+  margin-top: 16px;
+}
+
+.mk-steps button {
+  padding: 7px 14px;
+  border: 2px solid var(--mk-edge);
+  border-radius: 999px;
+  background: var(--mk-card);
+  color: var(--mk-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mk-steps button:disabled {
+  color: var(--mk-muted);
+  cursor: default;
+}

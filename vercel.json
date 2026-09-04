@@ -3,22 +3,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/noor",
-      "permanent": false
-    }
-  ],
+  "redirects": [{ "source": "/", "destination": "/noor", "permanent": false }],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
-      "source": "/noor/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
   ]
 }

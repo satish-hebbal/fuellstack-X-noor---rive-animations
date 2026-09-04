@@ -73,3 +73,21 @@ export const TILE_ASPECT_CLAMP: [min: number, max: number] = [0.45, 2.4]
  * that a 100-file gallery never loads all 100 at once.
  */
 export const PRELOAD_MARGIN = '800px'
+
+/* ------------------------------------------------------ makhraj lesson -- */
+
+/**
+ * How the mouth-diagram .riv is driven.
+ *
+ * The file goes in `src/assets/makhraj.riv`. Until it exists the diagram shows
+ * a placeholder, so the rest of the screen can be built and reviewed without
+ * it. These three names must match what's in the file — open it in the Rive
+ * editor and copy them from the State Machine panel.
+ */
+export const MAKHRAJ_STATE_MACHINE = 'State Machine 1'
+
+/** Number input, set to the letter's 1-based position (1–29). */
+export const MAKHRAJ_LETTER_INPUT = 'letter'
+
+/** Trigger input fired by the play button. Leave undefined if there isn't one. */
+export const MAKHRAJ_PLAY_INPUT: string | undefined = 'play'
