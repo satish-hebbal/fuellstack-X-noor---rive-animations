@@ -296,31 +296,6 @@
   transform: translateY(4px);
 }
 
-/* Stepping through letters while there's no real navigation yet. */
-.mk-steps {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  /* Clears the notch and play button hanging below the card. */
-  margin-top: 16px;
-}
-
-.mk-steps button {
-  padding: 7px 14px;
-  border: 2px solid var(--mk-edge);
-  border-radius: 999px;
-  background: var(--mk-card);
-  color: var(--mk-ink);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.mk-steps button:disabled {
-  color: var(--mk-muted);
-  cursor: default;
-}
 
 /* Shown while a letter has no timeline in the .riv yet. */
 .mk-stage__todo {
@@ -337,4 +312,39 @@
   background: #cfc9c1;
   box-shadow: 0 4px 0 #b8b1a8;
   cursor: default;
+}
+
+/* One button per letter the .riv animates. */
+.mk-picks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.mk-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 2px solid var(--mk-edge);
+  border-bottom-width: 4px;
+  border-radius: 999px;
+  background: var(--mk-card);
+  color: var(--mk-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mk-pick.is-active {
+  border-color: var(--mk-rust);
+  color: var(--mk-rust);
+}
+
+.mk-pick__arabic {
+  font-size: 19px;
+  line-height: 1;
 }

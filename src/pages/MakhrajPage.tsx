@@ -20,8 +20,16 @@ export default function MakhrajPage() {
   const [index, setIndex] = useState(0)
   const [playToken, setPlayToken] = useState(0)
   const [animated, setAnimated] = useState(true)
+  const [available, setAvailable] = useState<number[]>([])
 
-  const handleAvailability = useCallback((available: boolean) => setAnimated(available), [])
+  const handleAvailability = useCallback((isAnimated: boolean) => setAnimated(isAnimated), [])
+  const handleLetters = useCallback((indices: number[]) => setAvailable(indices), [])
+
+  /** Jump to a letter and play it in one go. */
+  const playLetter = useCallback((letterIndex: number) => {
+    setIndex(letterIndex - 1)
+    setPlayToken((token) => token + 1)
+  }, [])
 
   const letter = letters[index]
 
@@ -55,6 +63,7 @@ export default function MakhrajPage() {
             letterIndex={letter.index}
             playToken={playToken}
             onAvailability={handleAvailability}
+            onLetters={handleLetters}
           />
           {!animated && <p className="mk-stage__todo">No timeline for this letter yet</p>}
           <span className="mk-chip" lang="ar">
@@ -81,24 +90,30 @@ export default function MakhrajPage() {
         </button>
       </div>
 
-      {/* Temporary, until the real lesson flow exists — lets the diagram be
-          checked against every letter. */}
-      <div className="mk-steps">
-        <button
-          type="button"
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          disabled={index === 0}
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          onClick={() => setIndex((i) => Math.min(letters.length - 1, i + 1))}
-          disabled={index === letters.length - 1}
-        >
-          Next letter
-        </button>
-      </div>
+      {/* One button per letter the .riv actually animates. Built from the
+          file's own timelines, so it grows by itself as more are exported. */}
+      {available.length > 0 && (
+        <div className="mk-picks">
+          {available.map((position) => {
+            const option = letters[position - 1]
+            if (!option) return null
+            return (
+              <button
+                key={position}
+                type="button"
+                className={`mk-pick${position === letter.index ? ' is-active' : ''}`}
+                onClick={() => playLetter(position)}
+                aria-pressed={position === letter.index}
+              >
+                <span className="mk-pick__arabic" lang="ar">
+                  {option.arabic}
+                </span>
+                {option.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <button className="mk-cta" type="button">
         Trace it

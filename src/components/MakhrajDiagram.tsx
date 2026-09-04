@@ -31,9 +31,11 @@ type Props = {
   playToken: number
   /** Told whether this letter has a timeline, so the page can say so. */
   onAvailability?: (available: boolean) => void
+  /** The letter positions the file actually animates, ascending. */
+  onLetters?: (indices: number[]) => void
 }
 
-export function MakhrajDiagram({ letterIndex, playToken, onAvailability }: Props) {
+export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLetters }: Props) {
   const [byLetter, setByLetter] = useState<Record<number, string>>({})
 
   const layout = useMemo(
@@ -62,7 +64,12 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability }: Props
       if (!(index in map)) map[index] = name
     }
     setByLetter(map)
-  }, [rive])
+    onLetters?.(
+      Object.keys(map)
+        .map(Number)
+        .sort((a, b) => a - b),
+    )
+  }, [rive, onLetters])
 
   const animation = byLetter[letterIndex]
 
