@@ -25,6 +25,17 @@ const found = import.meta.glob('../assets/makhraj.riv', {
 
 const src: string | undefined = Object.values(found)[0]
 
+/**
+ * Loose sound files, named like the timelines: `01-alif.mp3`, `02-ba.mp3`.
+ * Anything here beats the .riv's embedded copy, and works even when Rive
+ * refused to export the asset at all.
+ */
+const audioFiles = import.meta.glob('../assets/audio/*.{mp3,wav,m4a,ogg,aac}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+
 type Props = {
   /** 1-based letter position. */
   letterIndex: number
@@ -49,6 +60,11 @@ export function MakhrajDiagram({
 
   // Sound is played by us, not by Rive — see lib/riveAudio.ts for why.
   const audio = useRef(createAudioLibrary())
+  useMemo(() => {
+    for (const [path, url] of Object.entries(audioFiles)) {
+      audio.current.addUrl(path.split('/').pop() ?? path, url)
+    }
+  }, [])
 
   const layout = useMemo(
     () => new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),

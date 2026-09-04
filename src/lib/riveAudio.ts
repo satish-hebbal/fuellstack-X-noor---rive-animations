@@ -13,12 +13,24 @@
  * timelines use: `01-alif` → 1, `02- ba` → 2.
  *
  * This also sidesteps Rive's audio unlocking, since we own the context.
+ *
+ * Sounds can come from two places, and a loose file always wins:
+ *
+ *   1. `src/assets/audio/01-alif.mp3` — just drop it in, no Rive involved.
+ *   2. Assets embedded in the .riv, if Rive compiled them.
+ *
+ * The first exists because Rive only exports assets something references, so a
+ * sound sitting unused in the editor's Assets panel never reaches the file.
+ * Keeping audio as ordinary files also means changing a recording doesn't need
+ * a re-export.
  */
 const LEADING_NUMBER = /^\s*(\d+)/
 
 export type AudioLibrary = {
-  /** Raw asset bytes, keyed by letter position. */
+  /** Raw asset bytes from inside the .riv, keyed by letter position. */
   add: (name: string, bytes: Uint8Array) => void
+  /** A loose audio file, which takes precedence over anything embedded. */
+  addUrl: (name: string, url: string) => void
   /** Which letters have a sound. */
   letters: () => number[]
   /** Play one, replacing whatever is already sounding. */
@@ -28,6 +40,7 @@ export type AudioLibrary = {
 
 export function createAudioLibrary(): AudioLibrary {
   const raw = new Map<number, Uint8Array>()
+  const urls = new Map<number, string>()
   const decoded = new Map<number, AudioBuffer>()
   let context: AudioContext | null = null
   let current: AudioBufferSourceNode | null = null
@@ -45,7 +58,13 @@ export function createAudioLibrary(): AudioLibrary {
       if (!raw.has(index)) raw.set(index, bytes)
     },
 
-    letters: () => [...raw.keys()].sort((a, b) => a - b),
+    addUrl(name, url) {
+      const match = LEADING_NUMBER.exec(name)
+      if (!match) return
+      urls.set(Number(match[1]), url)
+    },
+
+    letters: () => [...new Set([...urls.keys(), ...raw.keys()])].sort((a, b) => a - b),
 
     stop() {
       try {
@@ -57,8 +76,9 @@ export function createAudioLibrary(): AudioLibrary {
     },
 
     async play(letterIndex) {
+      const url = urls.get(letterIndex)
       const bytes = raw.get(letterIndex)
-      if (!bytes) return
+      if (!url && !bytes) return
 
       const ctx = getContext()
       // Safe to call repeatedly; only succeeds inside a user gesture, which is
@@ -69,7 +89,10 @@ export function createAudioLibrary(): AudioLibrary {
       if (!buffer) {
         // decodeAudioData detaches whatever it's given, so hand it a copy and
         // keep the original for any later re-decode.
-        buffer = await ctx.decodeAudioData(bytes.slice().buffer as ArrayBuffer)
+        const source = url
+          ? await (await fetch(url)).arrayBuffer()
+          : (bytes as Uint8Array).slice().buffer as ArrayBuffer
+        buffer = await ctx.decodeAudioData(source)
         decoded.set(letterIndex, buffer)
       }
 
