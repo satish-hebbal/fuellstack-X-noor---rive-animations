@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alignment, Fit, Layout, useRive } from '@rive-app/react-webgl2'
 import { MAKHRAJ_ANIMATION_INDEX, MAX_DEVICE_PIXEL_RATIO } from '../config'
+import { createAudioLibrary } from '../lib/riveAudio'
 
 /**
  * The vocal-tract diagram.
@@ -38,6 +39,9 @@ type Props = {
 export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLetters }: Props) {
   const [byLetter, setByLetter] = useState<Record<number, string>>({})
 
+  // Sound is played by us, not by Rive — see lib/riveAudio.ts for why.
+  const audio = useRef(createAudioLibrary())
+
   const layout = useMemo(
     () => new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
     [],
@@ -48,7 +52,20 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLette
   )
 
   const { rive, RiveComponent } = useRive(
-    src ? { src, layout, autoplay: false, autoBind: true } : null,
+    src
+      ? {
+          src,
+          layout,
+          autoplay: false,
+          autoBind: true,
+          // Observe the embedded assets on the way past so their bytes can be
+          // played directly. Returning false leaves Rive's own handling alone.
+          assetLoader: (asset, bytes) => {
+            if (asset.isAudio && bytes?.length) audio.current.add(asset.name, bytes)
+            return false
+          },
+        }
+      : null,
     { useOffscreenRenderer: true, customDevicePixelRatio: devicePixelRatio },
   )
 
@@ -84,6 +101,12 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLette
     onAvailability?.(Boolean(animation))
   }, [animation, onAvailability])
 
+  // Nothing should keep sounding after this leaves the screen.
+  useEffect(() => {
+    const library = audio.current
+    return () => library.stop()
+  }, [])
+
   // One effect covers both cases: changing letter and pressing play. Both
   // should start the timeline from the beginning, so both belong here.
   useEffect(() => {
@@ -96,17 +119,14 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLette
       return
     }
 
-    // Nudge the audio system. Rive unlocks audio from a one-shot `pointerdown`
-    // listener, and if that fires before the runtime is ready — or never fires,
-    // as on a page reached by keyboard — every sound stays muted with no error.
-    // Assigning volume re-reads the system volume, which retries the unlock, and
-    // we're inside a user gesture here so it's the moment most likely to work.
-    rive.volume = 1
-
     rive.stop()
     rive.play(animation)
     rive.startRendering()
-  }, [rive, animation, playToken])
+
+    // Only after a real interaction: an AudioContext can't start before one,
+    // and a queued sound would otherwise fire late and unprompted.
+    if (playToken > 0) void audio.current.play(letterIndex)
+  }, [rive, animation, playToken, letterIndex])
 
   if (!src) {
     return (
