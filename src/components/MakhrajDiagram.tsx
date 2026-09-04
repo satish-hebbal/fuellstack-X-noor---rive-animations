@@ -17,13 +17,27 @@ import { createAudioLibrary } from '../lib/riveAudio'
  * The .riv is optional at build time: glob returns an empty object when the
  * file isn't there, and the placeholder takes over.
  */
-const found = import.meta.glob('../assets/makhraj.riv', {
+/**
+ * Whatever .riv is sitting in `src/assets` — the name doesn't matter, so a fresh
+ * export can be dropped in as-is. Keep exactly one there: with several, the
+ * choice would be arbitrary, so we say which one we took and move on.
+ */
+const found = import.meta.glob('../assets/*.riv', {
   eager: true,
   query: '?url',
   import: 'default',
 }) as Record<string, string>
 
-const src: string | undefined = Object.values(found)[0]
+const riveFiles = Object.entries(found).sort(([a], [b]) => a.localeCompare(b))
+
+if (import.meta.env.DEV && riveFiles.length > 1) {
+  console.warn(
+    `[makhraj] ${riveFiles.length} .riv files in src/assets — using ` +
+      `${riveFiles[0][0].split('/').pop()}. Keep only the one you want.`,
+  )
+}
+
+const src: string | undefined = riveFiles[0]?.[1]
 
 /**
  * Loose sound files, named like the timelines: `01-alif.mp3`, `02-ba.mp3`.
