@@ -34,9 +34,17 @@ type Props = {
   onAvailability?: (available: boolean) => void
   /** The letter positions the file actually animates, ascending. */
   onLetters?: (indices: number[]) => void
+  /** The letter positions that have a sound embedded, ascending. */
+  onAudioLetters?: (indices: number[]) => void
 }
 
-export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLetters }: Props) {
+export function MakhrajDiagram({
+  letterIndex,
+  playToken,
+  onAvailability,
+  onLetters,
+  onAudioLetters,
+}: Props) {
   const [byLetter, setByLetter] = useState<Record<number, string>>({})
 
   // Sound is played by us, not by Rive — see lib/riveAudio.ts for why.
@@ -93,7 +101,9 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLette
         .map(Number)
         .sort((a, b) => a - b),
     )
-  }, [rive, onLetters])
+    // Assets are gathered by assetLoader during load, so by now this is final.
+    onAudioLetters?.(audio.current.letters())
+  }, [rive, onLetters, onAudioLetters])
 
   const animation = byLetter[letterIndex]
 

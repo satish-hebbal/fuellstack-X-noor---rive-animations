@@ -391,3 +391,15 @@
   font-size: 19px;
   line-height: 1;
 }
+
+/* Marks a letter that animates but has no sound exported with it. */
+.mk-pick__mute {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #f0ece7;
+  color: #a49c94;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

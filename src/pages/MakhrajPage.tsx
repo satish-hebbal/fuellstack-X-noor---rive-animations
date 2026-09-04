@@ -21,9 +21,11 @@ export default function MakhrajPage() {
   const [playToken, setPlayToken] = useState(0)
   const [animated, setAnimated] = useState(true)
   const [available, setAvailable] = useState<number[]>([])
+  const [withAudio, setWithAudio] = useState<number[]>([])
 
   const handleAvailability = useCallback((isAnimated: boolean) => setAnimated(isAnimated), [])
   const handleLetters = useCallback((indices: number[]) => setAvailable(indices), [])
+  const handleAudioLetters = useCallback((indices: number[]) => setWithAudio(indices), [])
 
   /** Jump to a letter and play it in one gesture. */
   const playLetter = useCallback((letterIndex: number) => {
@@ -32,6 +34,7 @@ export default function MakhrajPage() {
   }, [])
 
   const letter = letters[index]
+  const hasAudio = withAudio.includes(letter.index)
 
   return (
     <>
@@ -65,8 +68,13 @@ export default function MakhrajPage() {
               playToken={playToken}
               onAvailability={handleAvailability}
               onLetters={handleLetters}
+              onAudioLetters={handleAudioLetters}
             />
-            {!animated && <p className="mk-stage__todo">No timeline for this letter yet</p>}
+            {!animated ? (
+              <p className="mk-stage__todo">No timeline for this letter yet</p>
+            ) : (
+              !hasAudio && <p className="mk-stage__todo">No sound in the file for this letter</p>
+            )}
             <span className="mk-chip" lang="ar">
               {letter.arabic}
             </span>
@@ -119,6 +127,11 @@ export default function MakhrajPage() {
                     {option.arabic}
                   </span>
                   {option.name}
+                  {!withAudio.includes(position) && (
+                    <span className="mk-pick__mute" title="No sound in the file">
+                      muted
+                    </span>
+                  )}
                 </button>
               )
             })}
