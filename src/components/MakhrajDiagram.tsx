@@ -53,6 +53,13 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLette
   )
 
   // Read the file's timelines once and index them by their leading number.
+  // Handy when debugging audio or playback from the console.
+  useEffect(() => {
+    if (rive && import.meta.env.DEV) {
+      ;(window as unknown as Record<string, unknown>).__rive = rive
+    }
+  }, [rive])
+
   useEffect(() => {
     if (!rive) return
     const map: Record<number, string> = {}
@@ -88,6 +95,13 @@ export function MakhrajDiagram({ letterIndex, playToken, onAvailability, onLette
       rive.reset({ autoplay: false })
       return
     }
+
+    // Nudge the audio system. Rive unlocks audio from a one-shot `pointerdown`
+    // listener, and if that fires before the runtime is ready — or never fires,
+    // as on a page reached by keyboard — every sound stays muted with no error.
+    // Assigning volume re-reads the system volume, which retries the unlock, and
+    // we're inside a user gesture here so it's the moment most likely to work.
+    rive.volume = 1
 
     rive.stop()
     rive.play(animation)

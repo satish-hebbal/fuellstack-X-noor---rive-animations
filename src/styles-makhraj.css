@@ -315,12 +315,55 @@
 }
 
 /* One button per letter the .riv animates. */
+/* Sits beside the phone, not inside it — these are scratch controls, not part
+   of the screen being designed. */
+.mk-devtools {
+  position: fixed;
+  top: 50%;
+  left: 24px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e3ded7;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(36 28 23 / 10%);
+  transform: translateY(-50%);
+}
+
+.mk-devtools__title {
+  color: #b3aba3;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .mk-picks {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 16px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* No room beside the phone on a narrow window — park them along the bottom. */
+@media (max-width: 900px) {
+  .mk-devtools {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transform: none;
+  }
+
+  .mk-picks {
+    flex-direction: row;
+  }
 }
 
 .mk-pick {
