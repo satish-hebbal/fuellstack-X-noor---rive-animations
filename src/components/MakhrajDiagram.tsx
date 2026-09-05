@@ -45,11 +45,10 @@ if (import.meta.env.DEV && riveFiles.length > 1) {
 const src: string | undefined = chosen?.[1]
 
 /**
- * Loose sound files, named like the timelines: `01-alif.mp3`, `02-ba.mp3`.
- * Anything here beats the .riv's embedded copy, and works even when Rive
- * refused to export the asset at all.
+ * The letter sounds, named like the timelines: `01-alif.mp3`, `05-jeem.mp3`.
+ * Kept outside the .riv — see lib/riveAudio.ts for why.
  */
-const audioFiles = import.meta.glob('../assets/audio/*.{mp3,wav,m4a,ogg,aac}', {
+const audioFiles = import.meta.glob('../assets/trimmed-audio/*.{mp3,wav,m4a,ogg,aac}', {
   eager: true,
   query: '?url',
   import: 'default',

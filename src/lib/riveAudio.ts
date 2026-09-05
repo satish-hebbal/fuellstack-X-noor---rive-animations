@@ -2,7 +2,7 @@
  * Plays the letter sounds.
  *
  * Audio deliberately lives outside the .riv, as ordinary files in
- * `src/assets/audio` named `01-alif.mp3`, `02-ba.mp3`. Two reasons:
+ * `src/assets/trimmed-audio` named `01-alif.mp3`, `05-jeem.mp3`. Two reasons:
  *
  *  1. Rive only reports Events from state machines — `advanceAndReportChanges`
  *     gathers them from `activeStateMachines` and nowhere else. This file plays

@@ -1,8 +1,11 @@
 /**
  * The Arabic alphabet, in the order the lesson walks through it.
  *
- * 29 entries: the 28 letters plus hamza at the end, which is what makes خ the
- * seventh of twenty-nine.
+ * 29 entries, in hijaiyah order — the sequence used for Quran teaching, which
+ * ends waaw, haa, hamza, yaa rather than the haa, waaw, yaa, hamza of the
+ * modern-standard ordering. It has to match the numbering on the audio files
+ * and the Rive timelines, since the number is what pairs them: letter 26 shows
+ * waaw because `26-waaw.mp3` does.
  *
  * Emphatic letters carry a dot below (Ḥ, Ṣ, Ḍ, Ṭ, Ẓ) — without it ح and ه
  * would both be "Haa", and ت and ط both "Taa". Edit the names here if your
@@ -43,10 +46,10 @@ export const letters: Letter[] = [
   { index: 23, arabic: 'ل', name: 'Laam' },
   { index: 24, arabic: 'م', name: 'Meem' },
   { index: 25, arabic: 'ن', name: 'Noon' },
-  { index: 26, arabic: 'ه', name: 'Haa' },
-  { index: 27, arabic: 'و', name: 'Waaw' },
-  { index: 28, arabic: 'ي', name: 'Yaa' },
-  { index: 29, arabic: 'ء', name: 'Hamza' },
+  { index: 26, arabic: 'و', name: 'Waaw' },
+  { index: 27, arabic: 'ه', name: 'Haa' },
+  { index: 28, arabic: 'ء', name: 'Hamza' },
+  { index: 29, arabic: 'ي', name: 'Yaa' },
 ]
 
 export const letterCount = letters.length
