@@ -5,12 +5,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Centred rather than top-aligned, so the diagram gets the page's height
-     instead of leaving it empty underneath. */
-  justify-content: center;
-  gap: 22px;
+  gap: 20px;
   min-height: 100dvh;
-  padding: clamp(12px, 2vh, 36px) clamp(8px, 2vw, 36px);
+  padding: clamp(20px, 4vh, 44px) clamp(8px, 2vw, 36px) clamp(24px, 5vh, 56px);
+}
+
+.mk-title {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 /* Square, because the artboard is 500x500. Sized against the viewport's height

@@ -35,6 +35,8 @@ export default function MakhrajPage() {
 
   return (
     <main className="mk">
+      <h1 className="mk-title">Makhraj</h1>
+
       <div className="mk-stage">
         <MakhrajDiagram
           letterIndex={letter.index}
