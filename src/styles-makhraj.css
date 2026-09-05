@@ -1,6 +1,8 @@
 /* The makhraj page. Uses the site's own tokens rather than a second palette,
    so it follows the light/dark toggle like everything else. */
 
+/* The standalone page's shell. The player inside it is also used in the
+   gallery, where the surrounding page provides its own padding. */
 .mk {
   display: flex;
   flex-direction: column;
@@ -8,6 +10,14 @@
   gap: 20px;
   min-height: 100dvh;
   padding: clamp(20px, 4vh, 44px) clamp(8px, 2vw, 36px) clamp(24px, 5vh, 56px);
+}
+
+.mk-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
 }
 
 .mk-title {

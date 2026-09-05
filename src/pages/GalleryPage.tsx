@@ -11,6 +11,7 @@ import Folder from 'reicon-react/icons/Folder'
 import ChevronLeft from 'reicon-react/icons/ChevronLeft'
 import { GalleryCard } from '../components/GalleryCard'
 import { Lightbox } from '../components/Lightbox'
+import { MakhrajPlayer } from '../components/MakhrajPlayer'
 import { FpsMeter } from '../components/FpsMeter'
 import { animationSource, useAnimations } from '../lib/useAnimations'
 import type { RiveTile } from '../lib/animations'
@@ -40,10 +41,10 @@ export default function GalleryPage() {
 
   const collections = gallery.status === 'ready' ? gallery.collections : []
   const open = collections.find((collection) => collection.slug === openSlug) ?? null
-  const totalTiles = collections.reduce((sum, c) => sum + c.tiles.length, 0)
+  const totalTiles = collections.reduce((sum, c) => sum + c.count, 0)
   const totalFiles = collections.reduce((sum, c) => sum + c.fileCount, 0)
 
-  const shownTiles = open ? open.tiles.length : totalTiles
+  const shownTiles = open ? open.count : totalTiles
   const shownFiles = open ? open.fileCount : totalFiles
 
   useEffect(() => {
@@ -197,17 +198,21 @@ export default function GalleryPage() {
                 <span className="crumb__here">{open.title}</span>
               </button>
 
-              <div className="grid">
-                {open.tiles.map((tile) => (
-                  <GalleryCard
-                    key={tile.id}
-                    tile={tile}
-                    frozen={selected !== null}
-                    showFps={showFps}
-                    onOpen={setSelected}
-                  />
-                ))}
-              </div>
+              {open.kind === 'player' ? (
+                <MakhrajPlayer />
+              ) : (
+                <div className="grid">
+                  {open.tiles.map((tile) => (
+                    <GalleryCard
+                      key={tile.id}
+                      tile={tile}
+                      frozen={selected !== null}
+                      showFps={showFps}
+                      onOpen={setSelected}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <div className="folders">
@@ -221,9 +226,8 @@ export default function GalleryPage() {
                   <Folder size={26} aria-hidden="true" />
                   <span className="folder__name">{collection.title}</span>
                   <span className="folder__count">
-                    {collection.tiles.length}{' '}
-                    {collection.tiles.length === 1 ? 'animation' : 'animations'}
-                    {collection.fileCount !== collection.tiles.length &&
+                    {collection.count} {collection.count === 1 ? 'animation' : 'animations'}
+                    {collection.fileCount !== collection.count &&
                       ` · ${collection.fileCount} ${
                         collection.fileCount === 1 ? 'file' : 'files'
                       }`}

@@ -13,8 +13,16 @@ export type AnimationSource = 'drive' | 'local'
 export type Collection = {
   slug: string
   title: string
-  tiles: RiveTile[]
+  /** How many animations it holds, whether or not each gets a tile. */
+  count: number
   fileCount: number
+  /**
+   * `grid` lays the animations out as tiles. `player` shows one at a time with
+   * controls — right when the animations are variations of a single thing, as
+   * the letters are: five tiles would be five copies of the same diagram.
+   */
+  kind: 'grid' | 'player'
+  tiles: RiveTile[]
 }
 
 export type AnimationsState =
@@ -123,16 +131,22 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
         collections.push({
           slug: 'mascot',
           title: 'Mascot Animations',
-          tiles: mascotTiles,
+          count: mascotTiles.length,
           fileCount: mascotFiles.length,
+          kind: 'grid',
+          tiles: mascotTiles,
         })
       }
       if (letterTiles.length > 0) {
         collections.push({
           slug: 'makhraj',
           title: 'Makhraj Letter Animations',
-          tiles: letterTiles,
+          // Probed like any other file, so the count is real even though the
+          // tiles themselves are never rendered.
+          count: letterTiles.length,
           fileCount: letterFiles.length,
+          kind: 'player',
+          tiles: letterTiles,
         })
       }
 
