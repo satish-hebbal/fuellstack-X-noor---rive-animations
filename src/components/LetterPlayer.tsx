@@ -1,18 +1,46 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type ComponentType } from 'react'
 import Play from 'reicon-react/icons/Play'
-import { MakhrajDiagram } from './MakhrajDiagram'
 import { letters } from '../lib/letters'
 import '../styles-makhraj.css'
 
 /**
- * The mouth diagram plus its controls: one animation at a time, a play button,
- * and a letter to switch between.
- *
- * Shared by the /makhraj page and the gallery's letter collection. The letters
- * are one file rather than one per letter, so showing them as separate tiles
- * would be five copies of the same diagram — a player is the honest shape.
+ * What a stage inside the player has to accept. Two implement it —
+ * `MakhrajDiagram` (mouth, a timeline per letter) and `LetterStrokes` (the
+ * glyph being written, an artboard per letter) — and the shell below is
+ * identical for both, so it lives here once.
  */
-export function MakhrajPlayer() {
+export type LetterStageProps = {
+  /** 1-based letter position. */
+  letterIndex: number
+  /** Bump to replay the current letter. */
+  playToken: number
+  /** Told whether this letter is animated, so the page can say so. */
+  onAvailability?: (available: boolean) => void
+  /** The letter positions the file actually animates, ascending. */
+  onLetters?: (indices: number[]) => void
+  /** The letter positions that have a sound, ascending. */
+  onAudioLetters?: (indices: number[]) => void
+}
+
+type Props = {
+  stage: ComponentType<LetterStageProps>
+  /**
+   * Extra class on the white plate, for artwork that wants different framing.
+   * See `--mk-crop` in styles-makhraj.css.
+   */
+  stageClassName?: string
+}
+
+/**
+ * A letter animation plus its controls: one letter at a time, a play button,
+ * and a row of the letters the file covers.
+ *
+ * Shared by the /makhraj page and both of the gallery's letter collections.
+ * Each file holds every letter rather than one file per letter, so laying them
+ * out as separate tiles would be five copies of the same stage — a player is
+ * the honest shape.
+ */
+export function LetterPlayer({ stage: Stage, stageClassName = '' }: Props) {
   const [index, setIndex] = useState(0)
   const [playToken, setPlayToken] = useState(0)
   const [animated, setAnimated] = useState(true)
@@ -36,8 +64,8 @@ export function MakhrajPlayer() {
 
   return (
     <div className="mk-player">
-      <div className="mk-stage">
-        <MakhrajDiagram
+      <div className={`mk-stage ${stageClassName}`.trim()}>
+        <Stage
           letterIndex={letter.index}
           playToken={playToken}
           onAvailability={handleAvailability}

@@ -1,3 +1,5 @@
+import { LETTER_INDEX } from './letters'
+
 /**
  * Plays the letter sounds.
  *
@@ -5,20 +7,24 @@
  * `src/assets/trimmed-audio` named `01-alif.mp3`, `05-jeem.mp3`. Two reasons:
  *
  *  1. Rive only reports Events from state machines — `advanceAndReportChanges`
- *     gathers them from `activeStateMachines` and nowhere else. This file plays
- *     one linear timeline per letter, and linear animations report nothing, so
- *     an Audio Event on a timeline never fires at runtime however well it
- *     previews in the editor. Embedding audio would mean rebuilding the file as
- *     29 states and transitions.
+ *     gathers them from `activeStateMachines` and nowhere else. The mouth
+ *     diagram plays one linear timeline per letter, and linear animations
+ *     report nothing, so an Audio Event on a timeline never fires at runtime
+ *     however well it previews in the editor. Embedding audio would mean
+ *     rebuilding the file as 29 states and transitions.
  *  2. Rive only compiles assets something references, so a sound sitting in the
- *     editor's Assets panel can silently miss the export — which is exactly what
- *     happened to `01-alif`.
+ *     editor's Assets panel can silently miss the export — which is exactly
+ *     what happened to `01-alif`.
  *
  * Keeping them as files also means the same pairing works for the React Native
  * build: play timeline N, play sound N. The leading number is the whole
- * contract.
+ * contract, and both letter players read the same folder.
  */
-const LEADING_NUMBER = /^\s*(\d+)/
+const audioFiles = import.meta.glob('../assets/trimmed-audio/*.{mp3,wav,m4a,ogg,aac}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
 
 export type AudioLibrary = {
   /** Register a sound file under the letter its filename starts with. */
@@ -43,7 +49,7 @@ export function createAudioLibrary(): AudioLibrary {
 
   return {
     add(fileName, url) {
-      const match = LEADING_NUMBER.exec(fileName)
+      const match = LETTER_INDEX.exec(fileName)
       if (!match) return
       urls.set(Number(match[1]), url)
     },
@@ -82,4 +88,13 @@ export function createAudioLibrary(): AudioLibrary {
       current = source
     },
   }
+}
+
+/** A library holding every sound in `src/assets/trimmed-audio`. */
+export function createLetterSounds(): AudioLibrary {
+  const library = createAudioLibrary()
+  for (const [path, url] of Object.entries(audioFiles)) {
+    library.add(path.split('/').pop() ?? path, url)
+  }
+  return library
 }

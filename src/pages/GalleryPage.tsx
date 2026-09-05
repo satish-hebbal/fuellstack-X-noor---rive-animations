@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react'
 // Per-icon subpaths, not the package barrel — see the note in Lightbox.tsx.
 import Refresh from 'reicon-react/icons/Refresh'
 import Gauge from 'reicon-react/icons/Gauge'
@@ -10,12 +10,25 @@ import More from 'reicon-react/icons/More'
 import Folder from 'reicon-react/icons/Folder'
 import { GalleryCard } from '../components/GalleryCard'
 import { Lightbox } from '../components/Lightbox'
-import { MakhrajPlayer } from '../components/MakhrajPlayer'
+import { LetterPlayer } from '../components/LetterPlayer'
+import { MakhrajDiagram } from '../components/MakhrajDiagram'
+import { LetterStrokes } from '../components/LetterStrokes'
 import { FpsMeter } from '../components/FpsMeter'
 import { animationSource, useAnimations } from '../lib/useAnimations'
 import type { RiveTile } from '../lib/animations'
+import type { PlayerKind } from '../lib/bundledFiles'
 
 type Theme = 'light' | 'dark'
+
+/**
+ * The stage each player kind draws, and how its plate is framed. Keeping the
+ * mapping here is what lets `lib/` describe the collections without importing
+ * components.
+ */
+const players: Record<PlayerKind, ComponentProps<typeof LetterPlayer>> = {
+  makhraj: { stage: MakhrajDiagram },
+  strokes: { stage: LetterStrokes, stageClassName: 'mk-stage--flush' },
+}
 
 function initialTheme(): Theme {
   // A saved choice always wins. Otherwise light, regardless of the OS setting:
@@ -210,7 +223,7 @@ export default function GalleryPage() {
           ) : open ? (
             <>
               {open.kind === 'player' ? (
-                <MakhrajPlayer />
+                <LetterPlayer {...players[open.player]} />
               ) : (
                 <div className="grid">
                   {open.tiles.map((tile) => (

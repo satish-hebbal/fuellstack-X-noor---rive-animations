@@ -53,3 +53,55 @@ export const letters: Letter[] = [
 ]
 
 export const letterCount = letters.length
+
+/**
+ * The leading number in `5. jeem`, `05-jeem.mp3`.
+ *
+ * That number is the entire contract between the letter list above, the Rive
+ * files and the sound files. Nothing pairs them by name, spelling or order, so
+ * adding a letter never means editing code — it means exporting something
+ * whose name starts with the right number.
+ */
+export const LETTER_INDEX = /^\s*(\d+)/
+
+/**
+ * The same contract for an artboard-per-letter file, where the artboard's name
+ * is the number and nothing else: `1`, `2`, `3`.
+ *
+ * Deliberately stricter than {@link LETTER_INDEX}. Duplicating an artboard in
+ * the Rive editor produces names like `2 5`, `2 6` — twenty-odd unfinished
+ * copies of letter 2 sitting alongside the real one. Under the loose rule they
+ * all read as letter 2 and only export order decides which the app shows; under
+ * this one they're simply not letters until they're renamed to their own
+ * number. Silence beats the wrong glyph.
+ */
+export const ARTBOARD_LETTER = /^\s*(\d+)\s*$/
+
+/**
+ * Index names by their number: `["1. alif", "5. jeem"]` becomes
+ * `{ 1: "1. alif", 5: "5. jeem" }`. Names without one are skipped, and the
+ * first of a duplicate wins so a stray copy can't shadow the real thing.
+ */
+export function byLetterIndex(
+  names: Iterable<string>,
+  pattern: RegExp = LETTER_INDEX,
+): Record<number, string> {
+  const map: Record<number, string> = {}
+  for (const name of names) {
+    const match = pattern.exec(name)
+    if (!match) continue
+    const index = Number(match[1])
+    if (!(index in map)) map[index] = name
+  }
+  return map
+}
+
+/** The letter positions covered by a set of names, ascending. */
+export function letterIndices(
+  names: Iterable<string>,
+  pattern: RegExp = LETTER_INDEX,
+): number[] {
+  return Object.keys(byLetterIndex(names, pattern))
+    .map(Number)
+    .sort((a, b) => a - b)
+}

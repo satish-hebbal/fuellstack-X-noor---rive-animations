@@ -74,17 +74,11 @@ export const TILE_ASPECT_CLAMP: [min: number, max: number] = [0.45, 2.4]
  */
 export const PRELOAD_MARGIN = '800px'
 
-/* ------------------------------------------------------ makhraj lesson -- */
+/* ------------------------------------------------------ letter lessons -- */
 
-/**
- * How the mouth-diagram .riv maps to letters.
- *
- * The file at `src/assets/makhraj.riv` holds one timeline per letter, named
- * with the letter's position in front: `1. alif`, `2. baa`, `7. khaa`. That
- * number is the whole mapping — nothing here needs editing when you add more
- * letters, just export the file with the new timelines named the same way.
- *
- * The state machine in the file has no inputs, so playback drives the timelines
- * directly rather than setting machine values.
+/*
+ * How the letter files map to letters lives in `lib/letters.ts`, not here:
+ * every name — a timeline, an artboard, a sound file — starts with the
+ * letter's position, and that number is the whole mapping. Nothing here needs
+ * editing when letters are added; export more of them, named the same way.
  */
-export const MAKHRAJ_ANIMATION_INDEX = /^\s*(\d+)/

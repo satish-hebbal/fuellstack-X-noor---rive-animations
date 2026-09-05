@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alignment, Fit, Layout, useRive } from '@rive-app/react-webgl2'
-import { MAKHRAJ_ANIMATION_INDEX, MAX_DEVICE_PIXEL_RATIO } from '../config'
-import { makhrajSrc as src } from '../lib/makhrajFile'
-import { createAudioLibrary } from '../lib/riveAudio'
+import { MAX_DEVICE_PIXEL_RATIO } from '../config'
+import { makhrajFile } from '../lib/bundledFiles'
+import { byLetterIndex, letterIndices } from '../lib/letters'
+import { createLetterSounds } from '../lib/riveAudio'
+import type { LetterStageProps } from './LetterPlayer'
 
 /**
  * The vocal-tract diagram.
@@ -18,29 +20,7 @@ import { createAudioLibrary } from '../lib/riveAudio'
  * The .riv is optional at build time: glob returns an empty object when the
  * file isn't there, and the placeholder takes over.
  */
-
-/**
- * The letter sounds, named like the timelines: `01-alif.mp3`, `05-jeem.mp3`.
- * Kept outside the .riv — see lib/riveAudio.ts for why.
- */
-const audioFiles = import.meta.glob('../assets/trimmed-audio/*.{mp3,wav,m4a,ogg,aac}', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>
-
-type Props = {
-  /** 1-based letter position. */
-  letterIndex: number
-  /** Bump to replay the current letter. */
-  playToken: number
-  /** Told whether this letter has a timeline, so the page can say so. */
-  onAvailability?: (available: boolean) => void
-  /** The letter positions the file actually animates, ascending. */
-  onLetters?: (indices: number[]) => void
-  /** The letter positions that have a sound embedded, ascending. */
-  onAudioLetters?: (indices: number[]) => void
-}
+const src = makhrajFile?.src
 
 export function MakhrajDiagram({
   letterIndex,
@@ -48,16 +28,11 @@ export function MakhrajDiagram({
   onAvailability,
   onLetters,
   onAudioLetters,
-}: Props) {
+}: LetterStageProps) {
   const [byLetter, setByLetter] = useState<Record<number, string>>({})
 
   // Sound is played by us, not by Rive — see lib/riveAudio.ts for why.
-  const audio = useRef(createAudioLibrary())
-  useMemo(() => {
-    for (const [path, url] of Object.entries(audioFiles)) {
-      audio.current.add(path.split('/').pop() ?? path, url)
-    }
-  }, [])
+  const audio = useRef(createLetterSounds())
 
   const layout = useMemo(
     () => new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
@@ -76,20 +51,8 @@ export function MakhrajDiagram({
   // Read the file's timelines once and index them by their leading number.
   useEffect(() => {
     if (!rive) return
-    const map: Record<number, string> = {}
-    for (const name of rive.animationNames) {
-      const match = MAKHRAJ_ANIMATION_INDEX.exec(name)
-      if (!match) continue
-      const index = Number(match[1])
-      // First one wins, so a stray duplicate can't shadow the real timeline.
-      if (!(index in map)) map[index] = name
-    }
-    setByLetter(map)
-    onLetters?.(
-      Object.keys(map)
-        .map(Number)
-        .sort((a, b) => a - b),
-    )
+    setByLetter(byLetterIndex(rive.animationNames))
+    onLetters?.(letterIndices(rive.animationNames))
   }, [rive, onLetters])
 
   // Sound files are known from the glob, so this doesn't wait on Rive at all.
@@ -137,7 +100,7 @@ export function MakhrajDiagram({
     return (
       <div className="mk-stage__placeholder">
         <p>Mouth diagram</p>
-        <code>src/assets/makhraj.riv</code>
+        <code>src/assets/makhraj/*.riv</code>
       </div>
     )
   }

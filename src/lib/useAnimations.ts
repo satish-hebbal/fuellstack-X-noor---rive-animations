@@ -4,7 +4,8 @@ import { isDriveConfigured, listDriveAnimations } from './sources/drive'
 import { listLocalAnimations } from './sources/local'
 import { pruneFileCache } from './fileCache'
 import { probeRiveFile, pruneContentsCache } from './probeFile'
-import { makhrajAnimation } from './makhrajFile'
+import { bundledFiles, type BundledFile, type PlayerKind } from './bundledFiles'
+import { ARTBOARD_LETTER, letterIndices } from './letters'
 import { EXPAND_FILES_INTO_TILES, PROBE_CONCURRENCY, TILE_ASPECT_CLAMP } from '../config'
 
 export type AnimationSource = 'drive' | 'local'
@@ -16,14 +17,17 @@ export type Collection = {
   /** How many animations it holds, whether or not each gets a tile. */
   count: number
   fileCount: number
-  /**
-   * `grid` lays the animations out as tiles. `player` shows one at a time with
-   * controls — right when the animations are variations of a single thing, as
-   * the letters are: five tiles would be five copies of the same diagram.
-   */
-  kind: 'grid' | 'player'
   tiles: RiveTile[]
-}
+} & (
+  /** Laid out as tiles, one per animation in the folder. */
+  | { kind: 'grid' }
+  /**
+   * Shown one at a time with controls — right when the animations are
+   * variations of a single thing, as the letters are: five tiles would be five
+   * copies of the same stage. `player` says which stage draws them.
+   */
+  | { kind: 'player'; player: PlayerKind }
+)
 
 export type AnimationsState =
   | { status: 'loading' }
@@ -66,6 +70,23 @@ function fallbackTile(file: RiveAnimation, key: string): RiveTile {
     artboard: '',
     aspectRatio: clampRatio(4 / 3),
   }
+}
+
+/**
+ * Which letters a bundled file covers, read off the tiles the probe produced.
+ * The mouth diagram numbers its timelines, the stroke file its artboards — the
+ * leading number is the same contract either way.
+ */
+function coveredLetters(file: BundledFile, tiles: RiveTile[]): number[] {
+  if (file.player === 'makhraj') {
+    return letterIndices(tiles.map((tile) => tile.animation ?? tile.stateMachine ?? ''))
+  }
+  // Same rule the player itself applies, so the card can't promise a letter the
+  // player won't offer.
+  return letterIndices(
+    tiles.map((tile) => tile.artboard),
+    ARTBOARD_LETTER,
+  )
 }
 
 /**
@@ -114,14 +135,11 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
     }
 
     async function build(mascotFiles: RiveAnimation[]) {
-      // The letter animations ship with the app rather than coming from Drive,
-      // so the two collections are gathered separately and shown side by side.
-      const letterFile = makhrajAnimation()
-      const letterFiles = letterFile ? [letterFile] : []
-
-      const [mascotTiles, letterTiles] = await Promise.all([
+      // The letter files ship with the app rather than coming from Drive, so
+      // the collections are gathered separately and shown side by side.
+      const [mascotTiles, ...bundledTiles] = await Promise.all([
         toTiles(mascotFiles),
-        toTiles(letterFiles),
+        ...bundledFiles.map((file) => toTiles([file.animation])),
       ])
 
       if (!live()) return
@@ -137,24 +155,29 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
           tiles: mascotTiles,
         })
       }
-      if (letterTiles.length > 0) {
+
+      bundledFiles.forEach((file, index) => {
+        const tiles = bundledTiles[index] ?? []
+        if (tiles.length === 0) return
         collections.push({
-          slug: 'makhraj',
-          title: 'Makhraj Animations',
-          // Probed like any other file, so the count is real even though the
-          // tiles themselves are never rendered.
-          count: letterTiles.length,
-          fileCount: letterFiles.length,
+          slug: file.slug,
+          title: file.title,
+          // A player counts letters, not tiles: the stroke file holds a state
+          // machine *and* a timeline per artboard, which would otherwise read
+          // as two animations per letter.
+          count: coveredLetters(file, tiles).length,
+          fileCount: 1,
           kind: 'player',
-          tiles: letterTiles,
+          player: file.player,
+          tiles,
         })
-      }
+      })
 
       setState({ status: 'ready', collections })
 
       // Sweep both caches down to the files that are actually in the gallery,
       // so deleting one in Drive reclaims its storage too.
-      const keys = [...mascotFiles, ...letterFiles].map(cacheKeyOf)
+      const keys = [...mascotFiles, ...bundledFiles.map((file) => file.animation)].map(cacheKeyOf)
       pruneContentsCache(keys)
       void pruneFileCache(keys)
     }

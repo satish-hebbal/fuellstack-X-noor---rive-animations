@@ -55,6 +55,14 @@
   --mk-crop: 8%;
 }
 
+/* The mouth diagram's crop doesn't carry over. That file is one artboard with
+   a known dead margin; this one is an artboard per letter, and they don't fill
+   their 300x300 frames equally — an overhang tuned to a narrow alif would clip
+   a wide jeem. Safer to show each frame whole. */
+.mk-stage--flush {
+  --mk-crop: 0%;
+}
+
 .mk-stage__surface {
   position: absolute;
   inset: calc(var(--mk-crop) * -1);

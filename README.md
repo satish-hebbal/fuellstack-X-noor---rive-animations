@@ -20,16 +20,43 @@ npm run drive:check  # verify the Google Drive setup
 Routing is a dozen lines in [src/App.tsx](src/App.tsx): one path segment picks
 one page. No react-router — there are no nested routes, params or loaders here.
 
-`/makhraj` reads its mouth diagram from the `.riv` in **`src/assets/`** and its
-letter sounds from **`src/assets/trimmed-audio/`**, matched by the number each name
-starts with: timeline `5. jeem` pairs with `05-jeem.mp3`. Adding a letter is
-exporting a timeline and dropping a sound file — no code change. The letter list
-is [src/lib/letters.ts](src/lib/letters.ts).
+## Letter animations
+
+Two of the gallery's collections are letter lessons rather than mascot files.
+They ship with the app instead of coming from Drive, one folder each:
+
+| Folder | Collection | Shape |
+| --- | --- | --- |
+| `src/assets/makhraj/` | Makhraj Animations, and the `/makhraj` page | One artboard, **a timeline per letter** — `1. alif`, `2. baa` |
+| `src/assets/letters/` | Letter Animations | **An artboard per letter**, named for it and nothing else — `1`, `2`, `3` |
+
+Both are shown as a *player* — one letter at a time with a play button and a
+row of the letters the file covers — rather than as tiles, because five tiles
+would be five copies of the same stage.
+
+**The leading number in the name is the entire mapping.** A timeline called
+`5. jeem`, an artboard called `5`, and the sound `05-jeem.mp3` are the same
+letter; nothing pairs them by spelling or order. So adding a letter is
+exporting one more numbered timeline or artboard and dropping in a sound file
+— no code change. The letter list is [src/lib/letters.ts](src/lib/letters.ts),
+and the manifest of which folder is which collection is
+[src/lib/bundledFiles.ts](src/lib/bundledFiles.ts).
+
+Drop a fresh export into its folder under whatever name; keep one `.riv` per
+folder — **one file holding every artboard, not one file per letter**. If the
+Rive export is scoped to the active artboard the collection shows just that one.
+
+Artboard names are matched strictly: `6` is letter 6, but `2 6` — the name Rive
+gives a duplicate of artboard `2` — is not a letter at all. Unfinished copies can
+sit in the file harmlessly; rename each to its own number as you animate it.
+
+Letter sounds live in **`src/assets/trimmed-audio/`** and are shared by both
+collections.
 
 Audio is deliberately *not* embedded in the .riv. Rive only reports Events from
-state machines, and this file plays one linear timeline per letter — linear
-animations report no events, so an Audio Event on a timeline never fires at
-runtime however well it previews in the editor. See
+state machines, and the mouth diagram plays one linear timeline per letter —
+linear animations report no events, so an Audio Event on a timeline never fires
+at runtime however well it previews in the editor. See
 [src/assets/trimmed-audio/README.md](src/assets/trimmed-audio/README.md) for the full reasoning
 and what to hand the mobile team.
 
