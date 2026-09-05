@@ -640,8 +640,13 @@ kbd {
   white-space: nowrap;
 }
 
+/* Fredoka draws a tiny, barely-there slash, so the separator borrows the mono
+   face, which has a full-height one. */
 .topbar__crumb::before {
-  margin-right: 10px;
-  color: color-mix(in srgb, var(--muted) 45%, transparent);
+  margin-right: 12px;
+  color: var(--border);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 400;
   content: '/';
 }
