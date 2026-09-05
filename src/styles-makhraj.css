@@ -10,7 +10,7 @@
   justify-content: center;
   gap: 22px;
   min-height: 100dvh;
-  padding: clamp(16px, 3vh, 40px) clamp(12px, 3vw, 40px);
+  padding: clamp(12px, 2vh, 36px) clamp(8px, 2vw, 36px);
 }
 
 /* Square, because the artboard is 500x500. Sized against the viewport's height
@@ -22,7 +22,7 @@
    the theme. */
 .mk-stage {
   position: relative;
-  width: min(100%, 640px, 62vh);
+  width: min(100%, 720px, 68vh);
   aspect-ratio: 1;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -30,9 +30,20 @@
   overflow: hidden;
 }
 
+/* The artboard is 500x500 with a wide empty margin around the head, and
+   Fit.Contain fits the margin too — so the head reads small however large the
+   plate gets. Letting the canvas overhang the plate crops that dead space.
+
+   Done by oversizing the canvas rather than CSS-scaling it, so Rive renders at
+   the larger size and stays sharp. Raise --mk-crop for a tighter view; too far
+   and the artwork's own edges start to go. */
+.mk-stage {
+  --mk-crop: 8%;
+}
+
 .mk-stage__surface {
   position: absolute;
-  inset: 0;
+  inset: calc(var(--mk-crop) * -1);
 }
 
 .mk-note {
