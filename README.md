@@ -1,4 +1,4 @@
-# NOOR — Mascot Animations
+# NOOR Animation Assets
 
 A Pinterest-style masonry gallery for your `.riv` animations. Drop files in a
 folder, they appear as tiles sized to their own artboards, click one to see it

@@ -79,7 +79,21 @@ export default function GalleryPage() {
     <>
       <header className="topbar" ref={headerRef}>
         <div className="topbar__brand">
-          <h1>NOOR — Mascot Animations</h1>
+          {open && (
+            <button
+              className="topbar__back"
+              type="button"
+              onClick={() => setOpenSlug(null)}
+              title="All collections"
+              aria-label="Back to all collections"
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+          )}
+
+          <h1>NOOR Animation Assets</h1>
+
+          {open && <span className="topbar__crumb">{open.title}</span>}
         </div>
 
         {/* Narrow screens only: collapses everything below into a panel so the
@@ -192,12 +206,6 @@ export default function GalleryPage() {
             </div>
           ) : open ? (
             <>
-              <button className="crumb" type="button" onClick={() => setOpenSlug(null)}>
-                <ChevronLeft size={16} aria-hidden="true" />
-                All collections
-                <span className="crumb__here">{open.title}</span>
-              </button>
-
               {open.kind === 'player' ? (
                 <MakhrajPlayer />
               ) : (

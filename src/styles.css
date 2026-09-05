@@ -616,41 +616,37 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-/* Back out of a folder. */
-.crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 auto 18px;
-  padding: 7px 14px 7px 10px;
+/* Backing out of a folder lives in the topbar, so it costs no row of its own. */
+.topbar__back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--surface-2);
   color: var(--muted);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
   cursor: pointer;
 }
 
-.crumb:hover {
+.topbar__back:hover {
   border-color: var(--muted);
   color: var(--text);
 }
 
-.crumb__here {
-  padding-left: 8px;
-  border-left: 1px solid var(--border);
-  color: var(--text);
+.topbar__crumb {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* The crumb is a flex item in a block container, so centre it explicitly. */
-.page:has(.crumb) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.page:has(.crumb) .grid {
-  width: 100%;
+.topbar__crumb::before {
+  margin-right: 10px;
+  color: color-mix(in srgb, var(--muted) 45%, transparent);
+  content: '/';
 }
