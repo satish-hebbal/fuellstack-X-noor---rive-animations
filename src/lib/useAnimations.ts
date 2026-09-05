@@ -140,7 +140,7 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
       if (letterTiles.length > 0) {
         collections.push({
           slug: 'makhraj',
-          title: 'Makhraj Letter Animations',
+          title: 'Makhraj Animations',
           // Probed like any other file, so the count is real even though the
           // tiles themselves are never rendered.
           count: letterTiles.length,
