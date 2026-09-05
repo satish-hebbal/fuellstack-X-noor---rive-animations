@@ -99,9 +99,12 @@ export function MakhrajDiagram({
 
   const animation = byLetter[letterIndex]
 
+  // Only once the file is parsed. Reporting before then would announce "no
+  // animation for this letter" during the load, when we simply don't know yet.
   useEffect(() => {
+    if (!rive) return
     onAvailability?.(Boolean(animation))
-  }, [animation, onAvailability])
+  }, [rive, animation, onAvailability])
 
   // Nothing should keep sounding after this leaves the screen.
   useEffect(() => {

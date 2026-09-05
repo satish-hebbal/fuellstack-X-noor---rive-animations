@@ -616,24 +616,19 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-/* Backing out of a folder lives in the topbar, so it costs no row of its own. */
-.topbar__back {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 30px;
-  height: 30px;
+/* Inside a folder the title is the way back — same type, so the crumb reads as
+   one line and nothing moves when a folder opens. */
+.topbar__up {
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--muted);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
 }
 
-.topbar__back:hover {
-  border-color: var(--muted);
-  color: var(--text);
+.topbar__up:hover {
+  color: var(--ring);
 }
 
 .topbar__crumb {

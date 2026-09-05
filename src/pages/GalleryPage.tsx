@@ -8,7 +8,6 @@ import Play from 'reicon-react/icons/Play'
 import Files from 'reicon-react/icons/Files'
 import More from 'reicon-react/icons/More'
 import Folder from 'reicon-react/icons/Folder'
-import ChevronLeft from 'reicon-react/icons/ChevronLeft'
 import { GalleryCard } from '../components/GalleryCard'
 import { Lightbox } from '../components/Lightbox'
 import { MakhrajPlayer } from '../components/MakhrajPlayer'
@@ -79,19 +78,23 @@ export default function GalleryPage() {
     <>
       <header className="topbar" ref={headerRef}>
         <div className="topbar__brand">
-          {open && (
-            <button
-              className="topbar__back"
-              type="button"
-              onClick={() => setOpenSlug(null)}
-              title="All collections"
-              aria-label="Back to all collections"
-            >
-              <ChevronLeft size={18} aria-hidden="true" />
-            </button>
-          )}
-
-          <h1>NOOR Animation Assets</h1>
+          {/* A breadcrumb rather than a back button: the title stays put
+              whether or not a folder is open, so nothing shifts on the way in
+              and out. Inside one, the title is the way back. */}
+          <h1>
+            {open ? (
+              <button
+                className="topbar__up"
+                type="button"
+                onClick={() => setOpenSlug(null)}
+                title="All collections"
+              >
+                NOOR Animation Assets
+              </button>
+            ) : (
+              'NOOR Animation Assets'
+            )}
+          </h1>
 
           {open && <span className="topbar__crumb">{open.title}</span>}
         </div>
