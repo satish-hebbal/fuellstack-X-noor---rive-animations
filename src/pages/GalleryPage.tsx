@@ -7,6 +7,8 @@ import Moon from 'reicon-react/icons/Moon'
 import Play from 'reicon-react/icons/Play'
 import Files from 'reicon-react/icons/Files'
 import More from 'reicon-react/icons/More'
+import Folder from 'reicon-react/icons/Folder'
+import ChevronLeft from 'reicon-react/icons/ChevronLeft'
 import { GalleryCard } from '../components/GalleryCard'
 import { Lightbox } from '../components/Lightbox'
 import { FpsMeter } from '../components/FpsMeter'
@@ -31,6 +33,18 @@ export default function GalleryPage() {
   const headerRef = useRef<HTMLElement>(null)
 
   const gallery = useAnimations()
+
+  // Which folder is open, or null for the folder list. Kept in state rather
+  // than the URL: it's one level deep and nothing needs to link into it.
+  const [openSlug, setOpenSlug] = useState<string | null>(null)
+
+  const collections = gallery.status === 'ready' ? gallery.collections : []
+  const open = collections.find((collection) => collection.slug === openSlug) ?? null
+  const totalTiles = collections.reduce((sum, c) => sum + c.tiles.length, 0)
+  const totalFiles = collections.reduce((sum, c) => sum + c.fileCount, 0)
+
+  const shownTiles = open ? open.tiles.length : totalTiles
+  const shownFiles = open ? open.fileCount : totalFiles
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -85,15 +99,14 @@ export default function GalleryPage() {
             <span className="topbar__count">
               <span className="topbar__stat">
                 <Play size={13} aria-hidden="true" />
-                {gallery.tiles.length}{' '}
-                {gallery.tiles.length === 1 ? 'animation' : 'animations'}
+                {shownTiles} {shownTiles === 1 ? 'animation' : 'animations'}
               </span>
               {/* Only worth saying when the counts differ — ten tiles out of
                   two files is interesting, one out of one is noise. */}
-              {gallery.fileCount !== gallery.tiles.length && (
+              {shownFiles !== shownTiles && (
                 <span className="topbar__stat">
                   <Files size={13} aria-hidden="true" />
-                  {gallery.fileCount} {gallery.fileCount === 1 ? 'file' : 'files'}
+                  {shownFiles} {shownFiles === 1 ? 'file' : 'files'}
                 </span>
               )}
             </span>
@@ -158,7 +171,7 @@ export default function GalleryPage() {
         )}
 
         {gallery.status === 'ready' &&
-          (gallery.tiles.length === 0 ? (
+          (collections.length === 0 ? (
             <div className="notice">
               <h2>No animations yet</h2>
               <p>
@@ -176,16 +189,46 @@ export default function GalleryPage() {
                 )}
               </p>
             </div>
+          ) : open ? (
+            <>
+              <button className="crumb" type="button" onClick={() => setOpenSlug(null)}>
+                <ChevronLeft size={16} aria-hidden="true" />
+                All collections
+                <span className="crumb__here">{open.title}</span>
+              </button>
+
+              <div className="grid">
+                {open.tiles.map((tile) => (
+                  <GalleryCard
+                    key={tile.id}
+                    tile={tile}
+                    frozen={selected !== null}
+                    showFps={showFps}
+                    onOpen={setSelected}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="grid">
-              {gallery.tiles.map((tile) => (
-                <GalleryCard
-                  key={tile.id}
-                  tile={tile}
-                  frozen={selected !== null}
-                  showFps={showFps}
-                  onOpen={setSelected}
-                />
+            <div className="folders">
+              {collections.map((collection) => (
+                <button
+                  key={collection.slug}
+                  type="button"
+                  className="folder"
+                  onClick={() => setOpenSlug(collection.slug)}
+                >
+                  <Folder size={26} aria-hidden="true" />
+                  <span className="folder__name">{collection.title}</span>
+                  <span className="folder__count">
+                    {collection.tiles.length}{' '}
+                    {collection.tiles.length === 1 ? 'animation' : 'animations'}
+                    {collection.fileCount !== collection.tiles.length &&
+                      ` · ${collection.fileCount} ${
+                        collection.fileCount === 1 ? 'file' : 'files'
+                      }`}
+                  </span>
+                </button>
               ))}
             </div>
           ))}

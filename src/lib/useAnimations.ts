@@ -4,13 +4,22 @@ import { isDriveConfigured, listDriveAnimations } from './sources/drive'
 import { listLocalAnimations } from './sources/local'
 import { pruneFileCache } from './fileCache'
 import { probeRiveFile, pruneContentsCache } from './probeFile'
+import { makhrajAnimation } from './makhrajFile'
 import { EXPAND_FILES_INTO_TILES, PROBE_CONCURRENCY, TILE_ASPECT_CLAMP } from '../config'
 
 export type AnimationSource = 'drive' | 'local'
 
+/** A folder in the gallery. */
+export type Collection = {
+  slug: string
+  title: string
+  tiles: RiveTile[]
+  fileCount: number
+}
+
 export type AnimationsState =
   | { status: 'loading' }
-  | { status: 'ready'; tiles: RiveTile[]; fileCount: number }
+  | { status: 'ready'; collections: Collection[] }
   | { status: 'error'; message: string }
 
 export const animationSource: AnimationSource = isDriveConfigured ? 'drive' : 'local'
@@ -39,8 +48,20 @@ async function mapWithLimit<T, R>(
   return results
 }
 
+function fallbackTile(file: RiveAnimation, key: string): RiveTile {
+  return {
+    id: file.id,
+    title: file.title,
+    fileName: file.fileName,
+    url: file.url,
+    cacheKey: key,
+    artboard: '',
+    aspectRatio: clampRatio(4 / 3),
+  }
+}
+
 /**
- * Resolves the gallery's tiles.
+ * Resolves the gallery's collections.
  *
  * Two steps: list the files, then read each one to find the animations inside
  * it. That second step is why a file holding ten timelines shows as ten tiles.
@@ -64,51 +85,62 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
 
     const live = () => !cancelled && run === latest.current
 
-    async function build(files: RiveAnimation[]) {
+    /** Read each file and turn it into tiles, one per animation inside. */
+    async function toTiles(files: RiveAnimation[]): Promise<RiveTile[]> {
       const keys = files.map(cacheKeyOf)
 
-      let tiles: RiveTile[]
-      if (EXPAND_FILES_INTO_TILES) {
-        const contents = await mapWithLimit(files, PROBE_CONCURRENCY, (file) =>
-          probeRiveFile(file).catch(() => null),
-        )
-        tiles = files.flatMap((file, index) => {
-          const found = contents[index]
-          // A file we couldn't read still gets a tile, so its error is visible
-          // rather than the file silently vanishing from the gallery.
-          if (!found) {
-            return [
-              {
-                id: file.id,
-                title: file.title,
-                fileName: file.fileName,
-                url: file.url,
-                cacheKey: keys[index],
-                artboard: '',
-                aspectRatio: clampRatio(4 / 3),
-              },
-            ]
-          }
-          return expandToTiles(file, found, clampRatio)
-        })
-      } else {
-        tiles = files.map((file, index) => ({
-          id: file.id,
-          title: file.title,
-          fileName: file.fileName,
-          url: file.url,
-          cacheKey: keys[index],
-          artboard: '',
-          aspectRatio: clampRatio(4 / 3),
-        }))
+      if (!EXPAND_FILES_INTO_TILES) {
+        return files.map((file, index) => fallbackTile(file, keys[index]))
       }
+
+      const contents = await mapWithLimit(files, PROBE_CONCURRENCY, (file) =>
+        probeRiveFile(file).catch(() => null),
+      )
+
+      return files.flatMap((file, index) => {
+        const found = contents[index]
+        // A file we couldn't read still gets a tile, so its error is visible
+        // rather than the file silently vanishing from the gallery.
+        return found ? expandToTiles(file, found, clampRatio) : [fallbackTile(file, keys[index])]
+      })
+    }
+
+    async function build(mascotFiles: RiveAnimation[]) {
+      // The letter animations ship with the app rather than coming from Drive,
+      // so the two collections are gathered separately and shown side by side.
+      const letterFile = makhrajAnimation()
+      const letterFiles = letterFile ? [letterFile] : []
+
+      const [mascotTiles, letterTiles] = await Promise.all([
+        toTiles(mascotFiles),
+        toTiles(letterFiles),
+      ])
 
       if (!live()) return
 
-      setState({ status: 'ready', tiles, fileCount: files.length })
+      const collections: Collection[] = []
+      if (mascotTiles.length > 0) {
+        collections.push({
+          slug: 'mascot',
+          title: 'Mascot Animations',
+          tiles: mascotTiles,
+          fileCount: mascotFiles.length,
+        })
+      }
+      if (letterTiles.length > 0) {
+        collections.push({
+          slug: 'makhraj',
+          title: 'Makhraj Letter Animations',
+          tiles: letterTiles,
+          fileCount: letterFiles.length,
+        })
+      }
+
+      setState({ status: 'ready', collections })
 
       // Sweep both caches down to the files that are actually in the gallery,
       // so deleting one in Drive reclaims its storage too.
+      const keys = [...mascotFiles, ...letterFiles].map(cacheKeyOf)
       pruneContentsCache(keys)
       void pruneFileCache(keys)
     }
@@ -120,15 +152,13 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
         ? Promise.resolve(listLocalAnimations())
         : listDriveAnimations(controller.signal)
 
-    listing
-      .then(build)
-      .catch((error: unknown) => {
-        if (controller.signal.aborted || !live()) return
-        setState({
-          status: 'error',
-          message: error instanceof Error ? error.message : 'Couldn’t reach Google Drive.',
-        })
+    listing.then(build).catch((error: unknown) => {
+      if (controller.signal.aborted || !live()) return
+      setState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Couldn’t reach Google Drive.',
       })
+    })
 
     return () => {
       cancelled = true

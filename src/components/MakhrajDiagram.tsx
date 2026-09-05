@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alignment, Fit, Layout, useRive } from '@rive-app/react-webgl2'
 import { MAKHRAJ_ANIMATION_INDEX, MAX_DEVICE_PIXEL_RATIO } from '../config'
+import { makhrajSrc as src } from '../lib/makhrajFile'
 import { createAudioLibrary } from '../lib/riveAudio'
 
 /**
@@ -17,32 +18,6 @@ import { createAudioLibrary } from '../lib/riveAudio'
  * The .riv is optional at build time: glob returns an empty object when the
  * file isn't there, and the placeholder takes over.
  */
-/**
- * Whatever .riv is sitting in `src/assets` — the name doesn't matter, so a fresh
- * export can be dropped in as-is.
- *
- * Keep one file there. If there are several we take the last by name, which
- * matches how exports get named in practice (`-trail-a`, `-trail-b`, …) and so
- * lands on the newest rather than the stalest. It says which one it picked, but
- * deleting the old one is better than relying on that.
- */
-const found = import.meta.glob('../assets/*.riv', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>
-
-const riveFiles = Object.entries(found).sort(([a], [b]) => a.localeCompare(b))
-const chosen = riveFiles.at(-1)
-
-if (import.meta.env.DEV && riveFiles.length > 1) {
-  console.warn(
-    `[makhraj] ${riveFiles.length} .riv files in src/assets — using ` +
-      `${chosen?.[0].split('/').pop()}. Delete the ones you don't want.`,
-  )
-}
-
-const src: string | undefined = chosen?.[1]
 
 /**
  * The letter sounds, named like the timelines: `01-alif.mp3`, `05-jeem.mp3`.
