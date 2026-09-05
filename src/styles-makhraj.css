@@ -5,17 +5,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  /* Centred rather than top-aligned, so the diagram gets the page's height
+     instead of leaving it empty underneath. */
+  justify-content: center;
+  gap: 22px;
   min-height: 100dvh;
-  padding: clamp(20px, 5vh, 56px) clamp(16px, 4vw, 40px);
+  padding: clamp(16px, 3vh, 40px) clamp(12px, 3vw, 40px);
 }
 
-/* Square, because the artboard is 500x500. The white plate is the same one the
-   gallery tiles use — the artwork has a transparent background, so without it
-   the diagram would change colour with the theme. */
+/* Square, because the artboard is 500x500. Sized against the viewport's height
+   as well as its width, since a square that only watches width overflows a
+   short window. The 62vh leaves room for the controls below.
+
+   The white plate is the same one the gallery tiles use — the artwork has a
+   transparent background, so without it the diagram would change colour with
+   the theme. */
 .mk-stage {
   position: relative;
-  width: min(100%, 460px);
+  width: min(100%, 640px, 62vh);
   aspect-ratio: 1;
   border: 1px solid var(--border);
   border-radius: var(--radius);
