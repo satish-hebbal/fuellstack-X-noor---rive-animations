@@ -6,9 +6,17 @@ import type { RiveAnimation } from './animations'
  * folder.
  *
  * The file *names* don't matter, so a fresh export can be dropped into its
- * folder as-is. Keep one file per folder. If there are several we take the last
- * by name, which matches how the exports get named in practice (`-trail-c`,
- * `-trail-d`) and so lands on the newest rather than the stalest.
+ * folder as-is. Keep one file per folder: every file the glob sees is bundled
+ * whether or not it's the one we play, so a superseded export is dead weight in
+ * the build. Delete the old one once the new one looks right — or tuck it into a
+ * subfolder, which the glob doesn't recurse into.
+ *
+ * If there are several we take the last by name, ignoring the extension, which
+ * matches how the exports get named in practice: a suffixed revision sorts
+ * after the name it revises (`-trail-c` then `-trail-d`, `29-letters` then
+ * `29-letters-updated-a`), so we land on the newest rather than the stalest.
+ * Comparing whole filenames would get that backwards, since `-` sorts before
+ * the `.` of `.riv` and the base name would win.
  */
 
 /**
@@ -69,8 +77,13 @@ const specs: Spec[] = [
   },
 ]
 
+/** A path's name with its extension dropped: `a/29-letters.riv` to `29-letters`. */
+const stem = (path: string) => (path.split('/').pop() ?? path).replace(/\.[^.]*$/, '')
+
 function pick(spec: Spec): BundledFile | undefined {
-  const entries = Object.entries(spec.found).sort(([a], [b]) => a.localeCompare(b))
+  const entries = Object.entries(spec.found).sort(([a], [b]) =>
+    stem(a).localeCompare(stem(b)),
+  )
   const chosen = entries.at(-1)
   if (!chosen) return undefined
 
@@ -80,7 +93,8 @@ function pick(spec: Spec): BundledFile | undefined {
   if (import.meta.env.DEV && entries.length > 1) {
     console.warn(
       `[${spec.slug}] ${entries.length} .riv files in src/assets/${spec.folder} — ` +
-        `using ${fileName}. Delete the ones you don't want.`,
+        `using ${fileName}, and bundling the rest for nothing. ` +
+        `Delete the ones you don't want.`,
     )
   }
 
