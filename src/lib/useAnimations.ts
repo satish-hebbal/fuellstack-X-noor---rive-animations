@@ -4,8 +4,9 @@ import { isDriveConfigured, listDriveAnimations } from './sources/drive'
 import { listLocalAnimations } from './sources/local'
 import { pruneFileCache } from './fileCache'
 import { probeRiveFile, pruneContentsCache } from './probeFile'
-import { bundledFiles, type BundledFile, type PlayerKind } from './bundledFiles'
+import { bundledFiles, collectionSpecs, stem, type PlayerKind } from './bundledFiles'
 import { ARTBOARD_LETTER, letterIndices } from './letters'
+import { listLetterSounds } from './riveAudio'
 import { EXPAND_FILES_INTO_TILES, PROBE_CONCURRENCY, TILE_ASPECT_CLAMP } from '../config'
 
 export type AnimationSource = 'drive' | 'local'
@@ -26,12 +27,28 @@ export type Collection = {
    * variations of a single thing, as the letters are: five tiles would be five
    * copies of the same stage. `player` says which stage draws them.
    */
-  | { kind: 'player'; player: PlayerKind }
+  | {
+      kind: 'player'
+      player: PlayerKind
+      /** The file the player loads — from Drive when there is one, else bundled. */
+      src: string
+    }
 )
+
+/**
+ * One file in the downloadable bundle: where its bytes are now, and where it
+ * should sit inside the .zip. Built alongside the collections because that is
+ * where the routing already knows which file belongs to what.
+ */
+export type AssetFile = {
+  /** Path inside the archive, e.g. `letters/29-letters.riv`. */
+  path: string
+  url: string
+}
 
 export type AnimationsState =
   | { status: 'loading' }
-  | { status: 'ready'; collections: Collection[] }
+  | { status: 'ready'; collections: Collection[]; assets: AssetFile[] }
   | { status: 'error'; message: string }
 
 export const animationSource: AnimationSource = isDriveConfigured ? 'drive' : 'local'
@@ -77,8 +94,8 @@ function fallbackTile(file: RiveAnimation, key: string): RiveTile {
  * The mouth diagram numbers its timelines, the stroke file its artboards — the
  * leading number is the same contract either way.
  */
-function coveredLetters(file: BundledFile, tiles: RiveTile[]): number[] {
-  if (file.player === 'makhraj') {
+function coveredLetters(player: PlayerKind, tiles: RiveTile[]): number[] {
+  if (player === 'makhraj') {
     return letterIndices(tiles.map((tile) => tile.animation ?? tile.stateMachine ?? ''))
   }
   // Same rule the player itself applies, so the card can't promise a letter the
@@ -134,12 +151,51 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
       })
     }
 
-    async function build(mascotFiles: RiveAnimation[]) {
-      // The letter files ship with the app rather than coming from Drive, so
-      // the collections are gathered separately and shown side by side.
-      const [mascotTiles, ...bundledTiles] = await Promise.all([
+    /**
+     * Sort the listed files into collections before reading any of them.
+     *
+     * A player collection takes the file whose name claims it — so a letters
+     * export dropped into Drive drives Letter Animations rather than arriving
+     * as twenty-nine loose tiles in the Mascot grid. Whatever no collection
+     * claims is the grid, which is most things.
+     */
+    function route(files: RiveAnimation[]) {
+      const claimed = new Map<string, RiveAnimation>()
+      const mascotFiles: RiveAnimation[] = []
+
+      for (const file of files) {
+        const spec = collectionSpecs.find((candidate) => candidate.match.test(file.fileName))
+        if (!spec) {
+          mascotFiles.push(file)
+          continue
+        }
+        // Several exports of the same collection in one folder: newest wins,
+        // by the same stem rule the bundled folders use.
+        const held = claimed.get(spec.slug)
+        if (!held || stem(held.fileName).localeCompare(stem(file.fileName)) < 0) {
+          claimed.set(spec.slug, file)
+        }
+      }
+
+      // Drive wins where it has a file, so updating an animation is an upload
+      // rather than a commit. The bundled copy is what's left when it doesn't
+      // — which is every collection when Drive isn't configured at all.
+      const players = collectionSpecs.flatMap((spec) => {
+        const animation =
+          claimed.get(spec.slug) ??
+          bundledFiles.find((file) => file.slug === spec.slug)?.animation
+        return animation ? [{ spec, animation }] : []
+      })
+
+      return { mascotFiles, players }
+    }
+
+    async function build(files: RiveAnimation[]) {
+      const { mascotFiles, players } = route(files)
+
+      const [mascotTiles, ...playerTiles] = await Promise.all([
         toTiles(mascotFiles),
-        ...bundledFiles.map((file) => toTiles([file.animation])),
+        ...players.map(({ animation }) => toTiles([animation])),
       ])
 
       if (!live()) return
@@ -156,28 +212,44 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
         })
       }
 
-      bundledFiles.forEach((file, index) => {
-        const tiles = bundledTiles[index] ?? []
+      players.forEach(({ spec, animation }, index) => {
+        const tiles = playerTiles[index] ?? []
         if (tiles.length === 0) return
         collections.push({
-          slug: file.slug,
-          title: file.title,
+          slug: spec.slug,
+          title: spec.title,
           // A player counts letters, not tiles: the stroke file holds a state
           // machine *and* a timeline per artboard, which would otherwise read
           // as two animations per letter.
-          count: coveredLetters(file, tiles).length,
+          count: coveredLetters(spec.player, tiles).length,
           fileCount: 1,
           kind: 'player',
-          player: file.player,
+          player: spec.player,
+          src: animation.url,
           tiles,
         })
       })
 
-      setState({ status: 'ready', collections })
+      // Everything a developer would need to rebuild this gallery: each
+      // collection's file under its own folder, and the sounds that pair with
+      // the letters by number.
+      const assets: AssetFile[] = [
+        ...mascotFiles.map((file) => ({ path: `mascot/${file.fileName}`, url: file.url })),
+        ...players.map(({ spec, animation }) => ({
+          path: `${spec.slug}/${animation.fileName}`,
+          url: animation.url,
+        })),
+        ...listLetterSounds().map((sound) => ({
+          path: `audio/${sound.fileName}`,
+          url: sound.url,
+        })),
+      ]
+
+      setState({ status: 'ready', collections, assets })
 
       // Sweep both caches down to the files that are actually in the gallery,
       // so deleting one in Drive reclaims its storage too.
-      const keys = [...mascotFiles, ...bundledFiles.map((file) => file.animation)].map(cacheKeyOf)
+      const keys = [...mascotFiles, ...players.map(({ animation }) => animation)].map(cacheKeyOf)
       pruneContentsCache(keys)
       void pruneFileCache(keys)
     }

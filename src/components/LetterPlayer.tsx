@@ -10,6 +10,12 @@ import '../styles-makhraj.css'
  * identical for both, so it lives here once.
  */
 export type LetterStageProps = {
+  /**
+   * The .riv to load. The gallery passes the file its collection resolved to,
+   * which may have come from Drive; left out, the stage falls back to the copy
+   * bundled with the app, which is what the standalone /makhraj page uses.
+   */
+  src?: string
   /** 1-based letter position. */
   letterIndex: number
   /** Bump to replay the current letter. */
@@ -24,6 +30,8 @@ export type LetterStageProps = {
 
 type Props = {
   stage: ComponentType<LetterStageProps>
+  /** Passed straight through to the stage. See {@link LetterStageProps.src}. */
+  src?: string
   /**
    * Extra class on the white plate, for artwork that wants different framing.
    * See `--mk-crop` in styles-makhraj.css.
@@ -40,7 +48,7 @@ type Props = {
  * out as separate tiles would be five copies of the same stage — a player is
  * the honest shape.
  */
-export function LetterPlayer({ stage: Stage, stageClassName = '' }: Props) {
+export function LetterPlayer({ stage: Stage, src, stageClassName = '' }: Props) {
   const [index, setIndex] = useState(0)
   const [playToken, setPlayToken] = useState(0)
   const [animated, setAnimated] = useState(true)
@@ -66,6 +74,7 @@ export function LetterPlayer({ stage: Stage, stageClassName = '' }: Props) {
     <div className="mk-player">
       <div className={`mk-stage ${stageClassName}`.trim()}>
         <Stage
+          src={src}
           letterIndex={letter.index}
           playToken={playToken}
           onAvailability={handleAvailability}

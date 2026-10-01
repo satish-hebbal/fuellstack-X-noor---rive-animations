@@ -20,15 +20,18 @@ import type { LetterStageProps } from './LetterPlayer'
  * The .riv is optional at build time: glob returns an empty object when the
  * file isn't there, and the placeholder takes over.
  */
-const src = makhrajFile?.src
 
 export function MakhrajDiagram({
+  src: given,
   letterIndex,
   playToken,
   onAvailability,
   onLetters,
   onAudioLetters,
 }: LetterStageProps) {
+  // Whatever the gallery resolved for this collection, or the bundled copy.
+  const src = given ?? makhrajFile?.src
+
   const [byLetter, setByLetter] = useState<Record<number, string>>({})
 
   // Sound is played by us, not by Rive — see lib/riveAudio.ts for why.

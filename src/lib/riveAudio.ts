@@ -26,6 +26,16 @@ const audioFiles = import.meta.glob('../assets/trimmed-audio/*.{mp3,wav,m4a,ogg,
   import: 'default',
 }) as Record<string, string>
 
+/**
+ * Every bundled sound as a plain file, newest contract first: the name carries
+ * the letter number, so this is also what the download bundle ships.
+ */
+export function listLetterSounds(): { fileName: string; url: string }[] {
+  return Object.entries(audioFiles)
+    .map(([path, url]) => ({ fileName: path.split('/').pop() ?? path, url }))
+    .sort((a, b) => a.fileName.localeCompare(b.fileName, undefined, { numeric: true }))
+}
+
 export type AudioLibrary = {
   /** Register a sound file under the letter its filename starts with. */
   add: (fileName: string, url: string) => void

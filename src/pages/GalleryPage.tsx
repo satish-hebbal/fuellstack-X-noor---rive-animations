@@ -14,6 +14,7 @@ import { LetterPlayer } from '../components/LetterPlayer'
 import { MakhrajDiagram } from '../components/MakhrajDiagram'
 import { LetterStrokes } from '../components/LetterStrokes'
 import { FpsMeter } from '../components/FpsMeter'
+import { DownloadAll } from '../components/DownloadAll'
 import { animationSource, useAnimations } from '../lib/useAnimations'
 import type { RiveTile } from '../lib/animations'
 import type { PlayerKind } from '../lib/bundledFiles'
@@ -52,6 +53,7 @@ export default function GalleryPage() {
   const [openSlug, setOpenSlug] = useState<string | null>(null)
 
   const collections = gallery.status === 'ready' ? gallery.collections : []
+  const assets = gallery.status === 'ready' ? gallery.assets : []
   const open = collections.find((collection) => collection.slug === openSlug) ?? null
   const totalTiles = collections.reduce((sum, c) => sum + c.count, 0)
   const totalFiles = collections.reduce((sum, c) => sum + c.fileCount, 0)
@@ -147,6 +149,8 @@ export default function GalleryPage() {
           <div className="topbar__actions">
           {showFps && <FpsMeter />}
 
+          {assets.length > 0 && <DownloadAll assets={assets} />}
+
           {animationSource === 'drive' && (
             <button
               className="btn btn--ghost btn--icon"
@@ -223,7 +227,14 @@ export default function GalleryPage() {
           ) : open ? (
             <>
               {open.kind === 'player' ? (
-                <LetterPlayer {...players[open.player]} />
+                <LetterPlayer
+                  // Remount when the collection changes: useRive instantiates
+                  // once and ignores a later src, so reusing the instance
+                  // would keep the previous collection's file on screen.
+                  key={open.slug}
+                  {...players[open.player]}
+                  src={open.src}
+                />
               ) : (
                 <div className="grid">
                   {open.tiles.map((tile) => (

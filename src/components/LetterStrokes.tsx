@@ -20,7 +20,6 @@ import type { LetterStageProps } from './LetterPlayer'
  * changes. `rive.reset({ artboard })` re-instantiates on the same canvas, which
  * is both the supported way and much cheaper than remounting the component.
  */
-const src = letterFile?.src
 
 /** One letter's artboard, and the single thing to run on it. */
 type Playable = {
@@ -31,12 +30,16 @@ type Playable = {
 }
 
 export function LetterStrokes({
+  src: given,
   letterIndex,
   playToken,
   onAvailability,
   onLetters,
   onAudioLetters,
 }: LetterStageProps) {
+  // Whatever the gallery resolved for this collection, or the bundled copy.
+  const src = given ?? letterFile?.src
+
   // artboard name and what to play on it, per letter.
   const [byLetter, setByLetter] = useState<Record<number, Playable>>({})
 

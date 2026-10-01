@@ -148,6 +148,27 @@ kbd {
   color: var(--ring);
 }
 
+.btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* A failed download keeps the button clickable, so it has to read as a retry
+   rather than as the ordinary idle state. */
+.btn[data-state='failed'] {
+  border-color: var(--danger, #d14343);
+  color: var(--danger, #d14343);
+}
+
+/* The running count that replaces the icon mid-download. Tabular figures stop
+   the button twitching as the number widens. */
+.btn__progress {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 .btn kbd {
   padding: 1px 5px;
   border: 1px solid var(--border);
