@@ -53,6 +53,18 @@ export type AnimationsState =
 
 export const animationSource: AnimationSource = isDriveConfigured ? 'drive' : 'local'
 
+/**
+ * Grid collections besides Mascot, each claiming its files by name the same
+ * way the player collections do. Unclaimed files still fall through to Mascot.
+ */
+const gridSpecs: { slug: string; title: string; match: RegExp }[] = [
+  {
+    slug: 'events',
+    title: 'Events',
+    match: /^(first-aya|loading|planing-your-path)\b/i,
+  },
+]
+
 const [MIN_RATIO, MAX_RATIO] = TILE_ASPECT_CLAMP
 const clampRatio = (ratio: number) => Math.min(Math.max(ratio, MIN_RATIO), MAX_RATIO)
 
@@ -162,11 +174,13 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
     function route(files: RiveAnimation[]) {
       const claimed = new Map<string, RiveAnimation>()
       const mascotFiles: RiveAnimation[] = []
+      const grids = gridSpecs.map((spec) => ({ spec, files: [] as RiveAnimation[] }))
 
       for (const file of files) {
         const spec = collectionSpecs.find((candidate) => candidate.match.test(file.fileName))
         if (!spec) {
-          mascotFiles.push(file)
+          const grid = grids.find((candidate) => candidate.spec.match.test(file.fileName))
+          ;(grid ? grid.files : mascotFiles).push(file)
           continue
         }
         // Several exports of the same collection in one folder: newest wins,
@@ -187,30 +201,36 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
         return animation ? [{ spec, animation }] : []
       })
 
-      return { mascotFiles, players }
+      return { mascotFiles, grids, players }
     }
 
     async function build(files: RiveAnimation[]) {
-      const { mascotFiles, players } = route(files)
+      const { mascotFiles, grids: extraGrids, players } = route(files)
+      const grids = [
+        { spec: { slug: 'mascot', title: 'Mascot Animations' }, files: mascotFiles },
+        ...extraGrids,
+      ]
 
-      const [mascotTiles, ...playerTiles] = await Promise.all([
-        toTiles(mascotFiles),
-        ...players.map(({ animation }) => toTiles([animation])),
+      const [gridTiles, playerTiles] = await Promise.all([
+        Promise.all(grids.map((grid) => toTiles(grid.files))),
+        Promise.all(players.map(({ animation }) => toTiles([animation]))),
       ])
 
       if (!live()) return
 
       const collections: Collection[] = []
-      if (mascotTiles.length > 0) {
+      grids.forEach(({ spec, files }, index) => {
+        const tiles = gridTiles[index]
+        if (tiles.length === 0) return
         collections.push({
-          slug: 'mascot',
-          title: 'Mascot Animations',
-          count: mascotTiles.length,
-          fileCount: mascotFiles.length,
+          slug: spec.slug,
+          title: spec.title,
+          count: tiles.length,
+          fileCount: files.length,
           kind: 'grid',
-          tiles: mascotTiles,
+          tiles,
         })
-      }
+      })
 
       players.forEach(({ spec, animation }, index) => {
         const tiles = playerTiles[index] ?? []
@@ -234,7 +254,9 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
       // collection's file under its own folder, and the sounds that pair with
       // the letters by number.
       const assets: AssetFile[] = [
-        ...mascotFiles.map((file) => ({ path: `mascot/${file.fileName}`, url: file.url })),
+        ...grids.flatMap(({ spec, files }) =>
+          files.map((file) => ({ path: `${spec.slug}/${file.fileName}`, url: file.url })),
+        ),
         ...players.map(({ spec, animation }) => ({
           path: `${spec.slug}/${animation.fileName}`,
           url: animation.url,
@@ -249,7 +271,10 @@ export function useAnimations(): AnimationsState & { reload: () => void } {
 
       // Sweep both caches down to the files that are actually in the gallery,
       // so deleting one in Drive reclaims its storage too.
-      const keys = [...mascotFiles, ...players.map(({ animation }) => animation)].map(cacheKeyOf)
+      const keys = [
+        ...grids.flatMap((grid) => grid.files),
+        ...players.map(({ animation }) => animation),
+      ].map(cacheKeyOf)
       pruneContentsCache(keys)
       void pruneFileCache(keys)
     }

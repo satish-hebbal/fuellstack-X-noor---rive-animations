@@ -66,6 +66,20 @@ export type RiveTile = {
 }
 
 /**
+ * Artboards Rive adds to files exported on its free tier — the Rive logo and
+ * wordmark, plus a 1920×1080 `Watermark` that composes them. They're branding,
+ * not animations, and as tiles they show up blank or solid black.
+ */
+const WATERMARK_ARTBOARD = /^(watermark|nu ?rive ?(brand|word)mark\d*)$/i
+
+/**
+ * Names the editor hands out before anyone renames anything: `Artboard 1`,
+ * `State Machine 1`, `Timeline 1`. They say nothing about the animation, so
+ * the filename stands in for them.
+ */
+const DEFAULT_NAME = /^(artboard|state machine|timeline|untitled)( \d+)?$/i
+
+/**
  * Turn one file into its tiles: one per state machine, then one per timeline.
  *
  * A file with a single animation keeps the filename as its title (a lone
@@ -78,16 +92,22 @@ export function expandToTiles(
   clamp: (ratio: number) => number,
 ): RiveTile[] {
   const tiles: RiveTile[] = []
-  const manyArtboards = contents.artboards.length > 1
+  const artboards = contents.artboards.filter((artboard) => !WATERMARK_ARTBOARD.test(artboard.name))
+  const manyArtboards = artboards.length > 1
 
-  for (const artboard of contents.artboards) {
+  for (const artboard of artboards) {
     const aspectRatio = clamp(artboard.height > 0 ? artboard.width / artboard.height : 1)
 
     // State machines first: when a file has one, it's usually the headline
     // piece and the timelines are the parts it drives.
+    // A timeline still called `Timeline 1` next to a state machine is the
+    // thing that state machine plays, so it would be the same tile twice.
+    const hasStateMachine = artboard.stateMachines.length > 0
     const entries: { name: string; kind: 'stateMachine' | 'animation' }[] = [
       ...artboard.stateMachines.map((name) => ({ name, kind: 'stateMachine' as const })),
-      ...artboard.animations.map((name) => ({ name, kind: 'animation' as const })),
+      ...artboard.animations
+        .filter((name) => !(hasStateMachine && DEFAULT_NAME.test(name)))
+        .map((name) => ({ name, kind: 'animation' as const })),
     ]
 
     // An artboard with neither still deserves a tile — it's static artwork.
@@ -107,9 +127,13 @@ export function expandToTiles(
     for (const entry of entries) {
       tiles.push({
         id: `${animation.id}:${artboard.name}:${entry.kind}:${entry.name}`,
-        title: manyArtboards
-          ? `${toTitle(artboard.name)} · ${toTitle(entry.name)}`
-          : toTitle(entry.name),
+        // Default names drop out of the title; if nothing's left, the file's
+        // own name is the best description there is.
+        title:
+          [manyArtboards ? artboard.name : '', entry.name]
+            .filter((name) => name && !DEFAULT_NAME.test(name))
+            .map(toTitle)
+            .join(' · ') || animation.title,
         fileName: animation.fileName,
         url: animation.url,
         cacheKey: cacheKeyOf(animation),
